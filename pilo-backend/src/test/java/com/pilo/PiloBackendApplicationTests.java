@@ -1,10 +1,9 @@
 package com.pilo;
 
+import com.pilo.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class PiloBackendApplicationTests {
+class PiloBackendApplicationTests extends AbstractIntegrationTest {
 
 	@Test
 	void contextLoads() {

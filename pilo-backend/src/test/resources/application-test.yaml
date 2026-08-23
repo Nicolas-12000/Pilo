@@ -1,0 +1,15 @@
+# Activated with @ActiveProfiles("test"). Does not replace application.yaml.
+# Tests use Testcontainers for PostgreSQL, not postgres-db / .env.
+dotenv:
+  enabled: false
+
+pilo:
+  jwt:
+    secret: test-secret-must-be-at-least-32-bytes-long!
+    expiration: 1h
+  seed:
+    enabled: false
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://127.0.0.1:3000
