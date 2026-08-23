@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #b5551e;
+  --color-primary-hover: #9e481d;
+  --color-primary-active: #8a3f19;
+  --color-primary-disabled: #e8ded2;
+  --color-on-primary: #ffffff;
+  --color-on-primary-disabled: #a79a8a;
+  --color-primary-container: #f3ddd0;
+  --color-on-primary-container: #5c2a0f;
+  --color-secondary: #6b6259;
+  --color-success: #2f7d53;
+  --color-warning: #9e6819;
+  --color-danger: #b23b3b;
+  --color-danger-container: #f6dcdc;
+  --color-on-danger-container: #6b1f1f;
+  --color-info: #3e6b8a;
+  --color-background: #faf6f1;
+  --color-surface: #ffffff;
+  --color-surface-container: #f5efe8;
+  --color-on-surface: #241c16;
+  --color-on-surface-variant: #6b6259;
+  --color-outline: #a79a8a;
+  --color-outline-variant: #dfd3c4;
+  --font-display: var(--font-plus-jakarta);
+  --font-body: var(--font-inter);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-card: 0 1px 2px rgba(36, 28, 22, 0.06), 0 2px 8px rgba(36, 28, 22, 0.04);
+  --ease-pilo: cubic-bezier(0.2, 0, 0, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@utility font-display {
+  font-family: var(--font-display), sans-serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+@utility font-headline-lg {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+@utility font-label {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+@utility font-caps {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@utility text-body-lg {
+  font-family: var(--font-body), sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+@utility text-body-md {
+  font-family: var(--font-body), sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+@utility text-body-sm {
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+@utility duration-feedback {
+  transition-duration: 120ms;
+  transition-timing-function: var(--ease-pilo);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-on-surface);
 }
