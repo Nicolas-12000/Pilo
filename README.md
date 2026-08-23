@@ -94,8 +94,12 @@ cd pilo-frontend && pnpm test
 
 | Method | Path | Auth |
 | --- | --- | --- |
+| `GET` | `/api/v1/procedures/types` | Public |
+| `GET` | `/api/v1/procedures/types/{id}` | Public |
 | `POST` | `/api/v1/auth/login` | Public |
 | `GET` | `/api/v1/auth/me` | Bearer JWT |
+
+The procedure catalog is public. Authentication is required only when starting a case (next slice).
 
 Code, tables, and endpoints are in English. User-facing copy is in Spanish.
 
