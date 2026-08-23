@@ -1,3 +1,48 @@
 spring:
   application:
     name: pilo-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pilo}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+
+server:
+  address: ${SERVER_ADDRESS:0.0.0.0}
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+pilo:
+  jwt:
+    secret: ${PILO_JWT_SECRET:dev-only-change-me-to-a-256-bit-secret-key!!}
+    expiration: ${PILO_JWT_EXPIRATION:24h}
+  cors:
+    allowed-origins: ${PILO_CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+  seed:
+    enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+pilo:
+  seed:
+    enabled: true
