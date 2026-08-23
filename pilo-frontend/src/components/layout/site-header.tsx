@@ -1,16 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getStoredUser } from "@/lib/auth/session";
+import { useState } from "react";
+import { readStoredUser } from "@/lib/auth/session";
 import type { User } from "@/lib/api/types";
 
 export function SiteHeader() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
+  const [user] = useState<User | null>(readStoredUser);
 
   return (
     <header className="border-b border-outline-variant/60 bg-surface/90 backdrop-blur">

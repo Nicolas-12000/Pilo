@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { isAuthenticated } from "@/lib/auth/session";
+import { useState } from "react";
+import { readIsAuthenticated } from "@/lib/auth/session";
 
 type StartProcedureButtonProps = {
   procedureId: string;
@@ -13,13 +13,9 @@ export function StartProcedureButton({
   procedureId,
   procedureTitle,
 }: StartProcedureButtonProps) {
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated] = useState(readIsAuthenticated);
   const [confirmed, setConfirmed] = useState(false);
   const loginHref = `/login?next=${encodeURIComponent(`/tramites/${procedureId}`)}`;
-
-  useEffect(() => {
-    setAuthenticated(isAuthenticated());
-  }, []);
 
   if (!authenticated) {
     return (

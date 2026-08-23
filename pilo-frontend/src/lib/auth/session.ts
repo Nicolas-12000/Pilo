@@ -33,3 +33,17 @@ export function getStoredUser(): User | null {
 export function isAuthenticated() {
   return Boolean(getAccessToken() && getStoredUser());
 }
+
+export function readStoredUser(): User | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return getStoredUser();
+}
+
+export function readIsAuthenticated(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return isAuthenticated();
+}
