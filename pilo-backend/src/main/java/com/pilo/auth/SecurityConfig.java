@@ -40,6 +40,8 @@ public class SecurityConfig {
 						.permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/v1/auth/login")
 						.permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/procedures/types", "/api/v1/procedures/types/**")
+						.permitAll()
 						.requestMatchers("/actuator/health", "/actuator/health/**")
 						.permitAll()
 						.anyRequest()
