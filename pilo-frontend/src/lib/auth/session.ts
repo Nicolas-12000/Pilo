@@ -1,4 +1,4 @@
-import type { LoginResponse } from "@/lib/api/types";
+import type { LoginResponse, User } from "@/lib/api/types";
 
 const TOKEN_KEY = "pilo.accessToken";
 const USER_KEY = "pilo.user";
@@ -15,4 +15,21 @@ export function clearSession() {
 
 export function getAccessToken() {
   return window.sessionStorage.getItem(TOKEN_KEY);
+}
+
+export function getStoredUser(): User | null {
+  const raw = window.sessionStorage.getItem(USER_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as User;
+  } catch {
+    return null;
+  }
+}
+
+export function isAuthenticated() {
+  return Boolean(getAccessToken() && getStoredUser());
 }

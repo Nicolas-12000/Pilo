@@ -11,7 +11,11 @@
   --color-on-primary-container: #5c2a0f;
   --color-secondary: #6b6259;
   --color-success: #2f7d53;
+  --color-success-container: #dceee0;
+  --color-on-success-container: #1b4e33;
   --color-warning: #9e6819;
+  --color-warning-container: #f5e4c8;
+  --color-on-warning-container: #5c3e0c;
   --color-danger: #b23b3b;
   --color-danger-container: #f6dcdc;
   --color-on-danger-container: #6b1f1f;
@@ -19,6 +23,8 @@
   --color-background: #faf6f1;
   --color-surface: #ffffff;
   --color-surface-container: #f5efe8;
+  --color-surface-container-low: #fbf7f2;
+  --color-surface-container-high: #efe7dd;
   --color-on-surface: #241c16;
   --color-on-surface-variant: #6b6259;
   --color-outline: #a79a8a;
@@ -45,6 +51,20 @@
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+@utility font-title-md {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+@utility font-title-sm {
+  font-family: var(--font-display), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 @utility font-label {

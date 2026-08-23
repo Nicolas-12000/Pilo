@@ -18,3 +18,23 @@ export type ApiErrorBody = {
   error: string;
   message: string;
 };
+
+export type ProcedureTypeSummary = {
+  id: string;
+  title: string;
+  description: string;
+  targetDays: number;
+  requirementCount: number;
+};
+
+export type Requirement = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  mandatory: boolean;
+};
+
+export type ProcedureTypeDetail = ProcedureTypeSummary & {
+  requirements: Requirement[];
+};
