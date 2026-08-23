@@ -36,6 +36,9 @@ Desktop.ini
 *.log
 logs/
 
-# Other
+# Package manager caches (must never be committed)
+.pnpm-store/
+node_modules/
 
+# Other
 pilo.md
