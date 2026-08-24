@@ -19,6 +19,8 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
 	Optional<Document> findByIdAndProcedureCaseId(UUID id, UUID caseId);
 
+	boolean existsByRequirementId(UUID requirementId);
+
 	@Query("""
 			SELECT d FROM Document d
 			JOIN FETCH d.procedureCase pc

@@ -27,4 +27,6 @@ public interface ProcedureCaseRepository extends JpaRepository<ProcedureCase, UU
 	Optional<ProcedureCase> findDetailedById(@Param("id") UUID id);
 
 	Optional<ProcedureCase> findByCaseNumber(String caseNumber);
+
+	boolean existsByProcedureTypeId(UUID procedureTypeId);
 }

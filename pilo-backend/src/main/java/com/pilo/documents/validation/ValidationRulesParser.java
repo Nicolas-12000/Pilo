@@ -29,4 +29,19 @@ public class ValidationRulesParser {
 			return ValidationRules.empty();
 		}
 	}
+
+	public String serialize(ValidationRulesRequest request) {
+		try {
+			return objectMapper.writeValueAsString(
+					new ValidationRules(
+							request.expectedDocumentType(),
+							request.requireFutureExpiration(),
+							request.minConfidence()));
+		} catch (Exception exception) {
+			throw new IllegalArgumentException("INVALID_VALIDATION_RULES");
+		}
+	}
+
+	public record ValidationRulesRequest(
+			String expectedDocumentType, boolean requireFutureExpiration, Double minConfidence) {}
 }

@@ -14,4 +14,8 @@ public interface RequirementRepository extends JpaRepository<Requirement, UUID> 
 			WHERE r.id = :id
 			""")
 	Optional<Requirement> findDetailedById(@Param("id") UUID id);
+
+	boolean existsByProcedureTypeIdAndCode(UUID procedureTypeId, String code);
+
+	boolean existsByProcedureTypeIdAndCodeAndIdNot(UUID procedureTypeId, String code, UUID id);
 }
