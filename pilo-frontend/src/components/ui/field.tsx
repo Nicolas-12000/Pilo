@@ -21,3 +21,16 @@ export function Label({ className, ...props }: ComponentProps<"span">) {
 export function FieldError({ className, ...props }: ComponentProps<"span">) {
   return <span className={cn("text-body-sm text-danger", className)} {...props} />;
 }
+
+export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
+  return (
+    <textarea
+      className={cn(
+        "min-h-28 w-full rounded-sm bg-surface-container-low px-3.5 py-3 text-body-md text-on-surface ring-1 ring-outline outline-none transition-shadow duration-feedback placeholder:text-on-surface-variant/70 focus:ring-2 focus:ring-primary",
+        "aria-invalid:bg-danger-container aria-invalid:text-on-danger-container aria-invalid:ring-danger",
+        className,
+      )}
+      {...props}
+    />
+  );
+}

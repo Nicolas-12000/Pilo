@@ -15,6 +15,12 @@ export const procedureKeys = {
   detail: (id: string) => [...procedureKeys.all, "detail", id] as const,
 };
 
+export const adminProcedureKeys = {
+  all: ["admin-procedures"] as const,
+  list: () => [...adminProcedureKeys.all, "list"] as const,
+  detail: (id: string) => [...adminProcedureKeys.all, "detail", id] as const,
+};
+
 export type CaseBundle = {
   detail: CaseDetail;
   workflow: Workflow;
