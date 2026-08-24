@@ -1,5 +1,6 @@
 package com.pilo.procedures;
 
+import com.pilo.workflows.WorkflowDefinitionService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +11,13 @@ public abstract class ProcedureCatalogIntegrationTest extends com.pilo.support.A
 	protected ProcedureTypeRepository procedureTypeRepository;
 
 	@Autowired
-	protected RequirementRepository requirementRepository;
+	protected WorkflowDefinitionService workflowDefinitionService;
 
 	protected UUID procedureTypeId;
 
 	@BeforeEach
 	void seedProcedureCatalog() {
-		procedureTypeId = ProcedureCatalogFactory.seedRentalRegistration(procedureTypeRepository, requirementRepository);
+		procedureTypeId =
+				ProcedureCatalogFactory.seedRentalRegistration(procedureTypeRepository, workflowDefinitionService);
 	}
 }
