@@ -68,11 +68,12 @@ export async function uploadDocument(
 
     return {
       id: presigned.documentId ?? "pending",
+      requirementId,
+      requirementCode: "",
       fileName: file.name,
       mimeType: file.type || "application/octet-stream",
       fileSize: file.size,
       status: "PENDING_UPLOAD",
-      createdAt: new Date().toISOString(),
     };
   }
 

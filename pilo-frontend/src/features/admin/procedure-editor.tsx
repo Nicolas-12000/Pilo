@@ -194,29 +194,29 @@ export function ProcedureEditor({ procedureId }: ProcedureEditorProps) {
         className="mt-xl grid gap-md rounded-lg bg-surface-container p-md md:p-lg"
         onSubmit={procedureForm.handleSubmit((values) => saveProcedure.mutate(values))}
       >
-        <div className="grid gap-xs">
-          <Label htmlFor="title">Título</Label>
+        <label className="grid gap-xs">
+          <Label>Título</Label>
           <Input id="title" {...procedureForm.register("title")} />
           {procedureForm.formState.errors.title ? (
             <FieldError>{procedureForm.formState.errors.title.message}</FieldError>
           ) : null}
-        </div>
+        </label>
 
-        <div className="grid gap-xs">
-          <Label htmlFor="description">Descripción</Label>
+        <label className="grid gap-xs">
+          <Label>Descripción</Label>
           <Textarea id="description" {...procedureForm.register("description")} />
           {procedureForm.formState.errors.description ? (
             <FieldError>{procedureForm.formState.errors.description.message}</FieldError>
           ) : null}
-        </div>
+        </label>
 
-        <div className="grid gap-xs md:max-w-xs">
-          <Label htmlFor="targetDays">Plazo objetivo (días)</Label>
+        <label className="grid gap-xs md:max-w-xs">
+          <Label>Plazo objetivo (días)</Label>
           <Input id="targetDays" type="number" min={1} {...procedureForm.register("targetDays")} />
           {procedureForm.formState.errors.targetDays ? (
             <FieldError>{procedureForm.formState.errors.targetDays.message}</FieldError>
           ) : null}
-        </div>
+        </label>
 
         <div>
           <Button type="submit" disabled={saveProcedure.isPending}>
@@ -301,30 +301,30 @@ export function ProcedureEditor({ procedureId }: ProcedureEditorProps) {
             </h3>
 
             {!editingRequirement ? (
-              <div className="grid gap-xs md:max-w-sm">
-                <Label htmlFor="code">Código</Label>
+              <label className="grid gap-xs md:max-w-sm">
+                <Label>Código</Label>
                 <Input id="code" placeholder="RENTAL_CONTRACT" {...requirementForm.register("code")} />
                 {requirementForm.formState.errors.code ? (
                   <FieldError>{requirementForm.formState.errors.code.message}</FieldError>
                 ) : null}
-              </div>
+              </label>
             ) : null}
 
             <div className="grid gap-md md:grid-cols-2">
-              <div className="grid gap-xs">
-                <Label htmlFor="name">Nombre</Label>
+              <label className="grid gap-xs">
+                <Label>Nombre</Label>
                 <Input id="name" {...requirementForm.register("name")} />
-              </div>
-              <div className="grid gap-xs">
-                <Label htmlFor="expectedDocumentType">Tipo de documento esperado</Label>
+              </label>
+              <label className="grid gap-xs">
+                <Label>Tipo de documento esperado</Label>
                 <Input id="expectedDocumentType" {...requirementForm.register("expectedDocumentType")} />
-              </div>
+              </label>
             </div>
 
-            <div className="grid gap-xs">
-              <Label htmlFor="requirementDescription">Descripción</Label>
+            <label className="grid gap-xs">
+              <Label>Descripción</Label>
               <Textarea id="requirementDescription" {...requirementForm.register("description")} />
-            </div>
+            </label>
 
             <div className="flex flex-wrap gap-md">
               <label className="inline-flex items-center gap-2 text-body-sm text-on-surface">
@@ -337,8 +337,8 @@ export function ProcedureEditor({ procedureId }: ProcedureEditorProps) {
               </label>
             </div>
 
-            <div className="grid gap-xs md:max-w-xs">
-              <Label htmlFor="minConfidence">Confianza mínima (0–1, opcional)</Label>
+            <label className="grid gap-xs md:max-w-xs">
+              <Label>Confianza mínima (0–1, opcional)</Label>
               <Input
                 id="minConfidence"
                 type="number"
@@ -347,7 +347,7 @@ export function ProcedureEditor({ procedureId }: ProcedureEditorProps) {
                 max={1}
                 {...requirementForm.register("minConfidence")}
               />
-            </div>
+            </label>
 
             <div className="flex flex-wrap gap-sm">
               <Button type="submit" disabled={saveRequirement.isPending}>
