@@ -4,7 +4,7 @@
 
 PILO is an academic web platform for configuring and running administrative procedures: cases, document requirements, deterministic validation, and a workflow with dependencies. AI interprets documents; Spring Boot owns state and business decisions.
 
-This repository is a modular monolith. The current slice is week 1: local environment, authentication, and a login UI.
+This repository is a modular monolith. The current slice covers a functional demo through phase 3 (without AWS): public catalog, cases, document upload with local storage, Gemini extraction (or mock when no API key), workflow progress, audit trail, and BOE/datos reference search.
 
 ## Stack
 
@@ -48,6 +48,12 @@ cp pilo-frontend/.env.example pilo-frontend/.env.local
 
 2. Point `SPRING_DATASOURCE_*` at your database. Create a `pilo` database if it does not exist.
 
+   Optional for real AI extraction (otherwise the backend uses deterministic mock data):
+
+   ```bash
+   GEMINI_API_KEY=your-key-here
+   ```
+
 3. Optional, only if you do not already run Postgres:
 
 ```bash
@@ -81,6 +87,14 @@ pnpm dev
 | `reviewer@pilo.test` | `Password123!` | REVIEWER |
 | `admin@pilo.test` | `Password123!` | ADMIN |
 
+## Demo flow (phase 3, local)
+
+1. Open `http://localhost:3000/procedures` and browse procedures without logging in.
+2. Open a procedure and click **Iniciar trámite** (login if prompted).
+3. Upload a PDF or image for each requirement on the case page.
+4. The backend stores files under `PILO_STORAGE_PATH` (default `./storage`), calls Gemini when `GEMINI_API_KEY` is set, validates extracted fields deterministically, updates workflow tasks, and records audit events.
+5. Use **Mis expedientes** to return to your cases. The integration panel searches BOE and datos.gob.es (with demo fallbacks when APIs are unavailable).
+
 ## Tests
 
 Backend tests use Testcontainers. They do not read your `.env` and they do not touch the local `pilo` database.
@@ -90,7 +104,7 @@ cd pilo-backend && ./mvnw test
 cd pilo-frontend && pnpm test
 ```
 
-## API (week 1)
+## API
 
 | Method | Path | Auth |
 | --- | --- | --- |
@@ -98,15 +112,23 @@ cd pilo-frontend && pnpm test
 | `GET` | `/api/v1/procedures/types/{id}` | Public |
 | `POST` | `/api/v1/auth/login` | Public |
 | `GET` | `/api/v1/auth/me` | Bearer JWT |
+| `POST` | `/api/v1/cases` | Bearer JWT |
+| `GET` | `/api/v1/cases` | Bearer JWT |
+| `GET` | `/api/v1/cases/{id}` | Bearer JWT |
+| `POST` | `/api/v1/cases/{id}/documents/upload` | Bearer JWT (multipart) |
+| `GET` | `/api/v1/cases/{id}/documents` | Bearer JWT |
+| `GET` | `/api/v1/cases/{id}/workflow` | Bearer JWT |
+| `GET` | `/api/v1/integrations/boe/search?query=` | Public |
+| `GET` | `/api/v1/integrations/datos/search?query=` | Public |
 
-The procedure catalog is public. Authentication is required only when starting a case (next slice).
+The procedure catalog and integration search are public. Cases, documents, and workflow require authentication.
 
 Code, tables, and endpoints are in English. User-facing copy is in Spanish.
 
 ## Conventions
 
 - AI never changes case state. The backend validates and transitions.
-- Uploads will go to S3 with presigned URLs; binaries will not pass through Spring Boot.
+- Demo mode stores uploads on disk (`PILO_STORAGE_PATH`). Production will use S3 presigned URLs and Lambda workers.
 - Prefer a solid MVP over extra cloud services.
 
 ## License

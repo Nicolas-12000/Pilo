@@ -39,6 +39,7 @@ logs/
 # Package manager caches (must never be committed)
 .pnpm-store/
 node_modules/
+storage/
 
 # Other
 pilo.md
