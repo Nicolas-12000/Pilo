@@ -39,6 +39,21 @@ export type ProcedureTypeDetail = ProcedureTypeSummary & {
   requirements: Requirement[];
 };
 
+export type ValidationRules = {
+  expectedDocumentType: string;
+  requireFutureExpiration: boolean;
+  minConfidence: number | null;
+};
+
+export type AdminRequirement = Requirement & {
+  validationRules: ValidationRules;
+};
+
+export type AdminProcedureTypeDetail = ProcedureTypeSummary & {
+  hasCases: boolean;
+  requirements: AdminRequirement[];
+};
+
 export type CaseStatus =
   | "PENDING"
   | "IN_PROGRESS"
@@ -47,6 +62,7 @@ export type CaseStatus =
   | "REJECTED";
 
 export type DocumentStatus =
+  | "PENDING_UPLOAD"
   | "UPLOADED"
   | "PROCESSING"
   | "VALIDATED"

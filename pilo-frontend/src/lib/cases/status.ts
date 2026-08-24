@@ -38,6 +38,7 @@ export const caseStatus: Record<CaseStatus, StatusDescriptor> = {
 };
 
 export const documentStatus: Record<DocumentStatus, StatusDescriptor> = {
+  PENDING_UPLOAD: { label: "Subiendo", tone: "pending", icon: Loader2, spin: true },
   UPLOADED: { label: "Subido", tone: "pending", icon: Clock },
   PROCESSING: PROCESSING,
   VALIDATED: { label: "Validado", tone: "approved", icon: CheckCircle2 },
@@ -63,6 +64,12 @@ export const workflowTaskStatus: Record<WorkflowTaskStatus, StatusDescriptor> = 
 export const auditActionLabels: Record<string, string> = {
   CASE_CREATED: "Expediente creado",
   DOCUMENT_UPLOADED: "Documento subido",
+  DOCUMENT_UPLOAD_REQUESTED: "Subida solicitada",
+  PROCEDURE_TYPE_CREATED: "Trámite creado",
+  PROCEDURE_TYPE_UPDATED: "Trámite actualizado",
+  REQUIREMENT_CREATED: "Requisito creado",
+  REQUIREMENT_UPDATED: "Requisito actualizado",
+  REQUIREMENT_DELETED: "Requisito eliminado",
   DOCUMENT_VALIDATED: "Documento validado",
   DOCUMENT_REJECTED: "Documento rechazado",
   DOCUMENT_PROCESSING_FAILED: "Error al procesar el documento",
