@@ -1,33 +1,39 @@
+import { CalendarClock, ChevronRight, FileText } from "lucide-react";
 import Link from "next/link";
 import type { ProcedureTypeSummary } from "@/lib/api/types";
+import { routes } from "@/lib/routes";
 
-type ProcedureCardProps = {
-  procedure: ProcedureTypeSummary;
-};
-
-export function ProcedureCard({ procedure }: ProcedureCardProps) {
+export function ProcedureCard({ procedure }: { procedure: ProcedureTypeSummary }) {
   return (
-    <article className="rounded-lg bg-surface p-4 shadow-card">
+    <Link
+      href={routes.procedure(procedure.id)}
+      className="group flex flex-col rounded-lg bg-surface p-md shadow-card ring-1 ring-transparent transition-shadow duration-content hover:shadow-elevated hover:ring-outline-variant md:p-lg"
+    >
       <h2 className="font-title-md text-on-surface">{procedure.title}</h2>
-      <p className="mt-2 line-clamp-3 text-body-md text-on-surface-variant">
+      <p className="mt-xs line-clamp-3 text-body-sm text-on-surface-variant">
         {procedure.description}
       </p>
-      <dl className="mt-4 flex flex-wrap gap-3 text-body-sm text-on-surface-variant">
-        <div>
-          <dt className="font-caps text-secondary">Plazo</dt>
-          <dd className="mt-1">{procedure.targetDays} días</dd>
-        </div>
-        <div>
-          <dt className="font-caps text-secondary">Requisitos</dt>
-          <dd className="mt-1">{procedure.requirementCount}</dd>
-        </div>
-      </dl>
-      <Link
-        href={`/tramites/${procedure.id}`}
-        className="mt-5 inline-flex h-11 items-center rounded-md bg-primary px-4 font-label text-on-primary hover:bg-primary-hover"
-      >
+
+      <div className="mt-md flex flex-wrap items-center gap-x-md gap-y-xs text-body-sm text-on-surface-variant">
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarClock size={16} strokeWidth={1.75} />
+          {procedure.targetDays} días
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <FileText size={16} strokeWidth={1.75} />
+          {procedure.requirementCount}{" "}
+          {procedure.requirementCount === 1 ? "requisito" : "requisitos"}
+        </span>
+      </div>
+
+      <span className="mt-md inline-flex items-center gap-1 font-label text-primary-hover">
         Ver trámite
-      </Link>
-    </article>
+        <ChevronRight
+          size={16}
+          strokeWidth={1.75}
+          className="transition-transform duration-feedback group-hover:translate-x-0.5"
+        />
+      </span>
+    </Link>
   );
 }

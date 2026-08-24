@@ -1,8 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import { Loader2, LogIn, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { readIsAuthenticated } from "@/lib/auth/session";
+import { toast } from "sonner";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { createCase } from "@/lib/api/cases";
+import { ApiError } from "@/lib/api/client";
+import { useSession } from "@/lib/auth/use-session";
+import { routes } from "@/lib/routes";
 
 type StartProcedureButtonProps = {
   procedureId: string;
@@ -13,47 +19,61 @@ export function StartProcedureButton({
   procedureId,
   procedureTitle,
 }: StartProcedureButtonProps) {
-  const [authenticated] = useState(readIsAuthenticated);
-  const [confirmed, setConfirmed] = useState(false);
-  const loginHref = `/login?next=${encodeURIComponent(`/tramites/${procedureId}`)}`;
+  const router = useRouter();
+  const { status } = useSession();
+  const [loading, setLoading] = useState(false);
 
-  if (!authenticated) {
+  if (status === "loading") {
+    return <div className="h-28 animate-pulse rounded-lg bg-surface-container" />;
+  }
+
+  if (status === "anonymous") {
     return (
-      <div className="rounded-lg bg-primary-container px-4 py-4">
+      <div className="rounded-lg bg-primary-container p-md md:p-lg">
         <p className="text-body-md text-on-primary-container">
           Para iniciar <strong>{procedureTitle}</strong> necesitas una cuenta.
         </p>
-        <Link
-          href={loginHref}
-          className="mt-4 inline-flex h-12 items-center rounded-md bg-primary px-5 font-label text-on-primary hover:bg-primary-hover"
+        <ButtonLink
+          href={routes.loginNext(routes.procedure(procedureId))}
+          className="mt-md"
         >
+          <LogIn size={20} strokeWidth={1.75} />
           Iniciar sesión para continuar
-        </Link>
+        </ButtonLink>
       </div>
     );
   }
 
-  if (confirmed) {
-    return (
-      <div className="rounded-lg bg-success-container px-4 py-4 text-body-md text-on-success-container">
-        Tu sesión está activa. La creación del expediente se conectará en el siguiente paso
-        del proyecto.
-      </div>
-    );
+  async function handleStart() {
+    setLoading(true);
+    try {
+      const created = await createCase(procedureId);
+      toast.success("Expediente creado", { description: created.caseNumber });
+      router.push(routes.case(created.id));
+    } catch (cause) {
+      toast.error(
+        cause instanceof ApiError
+          ? cause.message
+          : "No se ha podido crear el expediente. Inténtalo de nuevo.",
+      );
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="rounded-lg bg-surface-container px-4 py-4">
+    <div className="rounded-lg bg-surface-container p-md md:p-lg">
       <p className="text-body-md text-on-surface">
-        Ya puedes iniciar este trámite con tu cuenta.
+        Se creará un expediente con los requisitos de este trámite y podrás empezar a subir
+        documentos de inmediato.
       </p>
-      <button
-        type="button"
-        onClick={() => setConfirmed(true)}
-        className="mt-4 inline-flex h-12 items-center rounded-md bg-primary px-5 font-label text-on-primary hover:bg-primary-hover"
-      >
-        Iniciar trámite
-      </button>
+      <Button onClick={handleStart} disabled={loading} className="mt-md">
+        {loading ? (
+          <Loader2 size={20} strokeWidth={1.75} className="animate-spin" />
+        ) : (
+          <Sparkles size={20} strokeWidth={1.75} />
+        )}
+        {loading ? "Creando expediente…" : "Iniciar trámite"}
+      </Button>
     </div>
   );
 }

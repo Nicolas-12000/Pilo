@@ -1,8 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { FieldError, Input, Label } from "@/components/ui/field";
 import { ApiError, login } from "@/lib/api/auth";
 import { persistSession } from "@/lib/auth/session";
 import { loginSchema, type LoginValues } from "@/lib/auth/login-schema";
@@ -38,46 +41,48 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   }
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <label className="flex flex-col gap-2">
-        <span className="font-label text-on-surface">Correo electrónico</span>
-        <input
+    <form className="flex flex-col gap-md" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <label className="flex flex-col gap-xs">
+        <Label>Correo electrónico</Label>
+        <Input
           type="email"
           autoComplete="email"
-          className="h-12 rounded-sm bg-surface px-3.5 text-body-md text-on-surface outline-none ring-1 ring-outline-variant focus:ring-2 focus:ring-primary"
+          aria-invalid={errors.email ? true : undefined}
           {...register("email")}
         />
-        {errors.email ? (
-          <span className="text-body-sm text-danger">{errors.email.message}</span>
-        ) : null}
+        {errors.email ? <FieldError>{errors.email.message}</FieldError> : null}
       </label>
 
-      <label className="flex flex-col gap-2">
-        <span className="font-label text-on-surface">Contraseña</span>
-        <input
+      <label className="flex flex-col gap-xs">
+        <Label>Contraseña</Label>
+        <Input
           type="password"
           autoComplete="current-password"
-          className="h-12 rounded-sm bg-surface px-3.5 text-body-md text-on-surface outline-none ring-1 ring-outline-variant focus:ring-2 focus:ring-primary"
+          aria-invalid={errors.password ? true : undefined}
           {...register("password")}
         />
-        {errors.password ? (
-          <span className="text-body-sm text-danger">{errors.password.message}</span>
-        ) : null}
+        {errors.password ? <FieldError>{errors.password.message}</FieldError> : null}
       </label>
 
       {formError ? (
-        <p className="rounded-sm bg-danger-container px-3.5 py-3 text-body-sm text-on-danger-container">
+        <p
+          role="alert"
+          className="rounded-sm bg-danger-container px-3.5 py-3 text-body-sm text-on-danger-container"
+        >
           {formError}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="h-12 rounded-md bg-primary px-5 font-label text-on-primary transition-colors duration-feedback enabled:hover:bg-primary-hover enabled:active:bg-primary-active disabled:bg-primary-disabled disabled:text-on-primary-disabled"
-      >
-        {isSubmitting ? "Entrando…" : "Entrar"}
-      </button>
+      <Button type="submit" disabled={isSubmitting} className="mt-xs">
+        {isSubmitting ? (
+          <>
+            <Loader2 size={20} strokeWidth={1.75} className="animate-spin" />
+            Entrando…
+          </>
+        ) : (
+          "Entrar"
+        )}
+      </Button>
     </form>
   );
 }
