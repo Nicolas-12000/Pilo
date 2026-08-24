@@ -39,7 +39,8 @@ logs/
 # Package manager caches (must never be committed)
 .pnpm-store/
 node_modules/
-storage/
+# Local uploaded documents (PILO_STORAGE_PATH), not the Java storage package
+pilo-backend/storage/
 
 # Other
 pilo.md
