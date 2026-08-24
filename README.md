@@ -15,7 +15,7 @@ This repository is a modular monolith. The current slice covers a functional dem
 | Database | PostgreSQL |
 | Tests | JUnit, Testcontainers, Vitest |
 | CI | GitHub Actions |
-| Infra (later) | AWS S3, Lambda, Terraform |
+| Infra (later) | AWS S3, Lambda, Terraform — see `docs/aws-operations.md` |
 
 ## Repository layout
 
@@ -23,6 +23,8 @@ This repository is a modular monolith. The current slice covers a functional dem
 .
 ├── pilo-backend/     Spring Boot API (`/api/v1`)
 ├── pilo-frontend/    Next.js app
+├── pilo-worker/      AWS Lambda document processor (Python)
+├── docs/             Operational guides (AWS, Terraform inputs)
 ├── docker-compose.yml   Optional local PostgreSQL
 └── .env.example      Shared local-variable template
 ```
@@ -128,7 +130,7 @@ Code, tables, and endpoints are in English. User-facing copy is in Spanish.
 ## Conventions
 
 - AI never changes case state. The backend validates and transitions.
-- Demo mode stores uploads on disk (`PILO_STORAGE_PATH`). Production will use S3 presigned URLs and Lambda workers.
+- Demo mode stores uploads on disk (`PILO_STORAGE_PROVIDER=local`). Production uses S3 presigned URLs and the `pilo-worker` Lambda — see `docs/aws-operations.md`.
 - Prefer a solid MVP over extra cloud services.
 
 ## License
