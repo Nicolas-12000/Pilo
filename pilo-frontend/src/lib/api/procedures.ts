@@ -17,8 +17,6 @@ async function readApiError(response: Response) {
   throw new ApiError(body?.message ?? "No se ha podido completar la petición.", response.status, body?.error);
 }
 
-export const dynamic = "force-dynamic";
-
 export async function listProcedureTypes(): Promise<ProcedureTypeSummary[]> {
   const response = await fetch(`${getApiUrl()}/api/v1/procedures/types`, {
     cache: "no-store",

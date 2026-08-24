@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label } from "@/components/ui/field";
 import { ApiError, login } from "@/lib/api/auth";
+import { DEMO_PASSWORD, demoAccounts } from "@/lib/auth/demo-accounts";
 import { persistSession } from "@/lib/auth/session";
 import { loginSchema, type LoginValues } from "@/lib/auth/login-schema";
 
@@ -19,6 +20,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -40,8 +42,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     }
   }
 
+  function fillDemo(email: string) {
+    setValue("email", email, { shouldValidate: true });
+    setValue("password", DEMO_PASSWORD, { shouldValidate: true });
+    setFormError(null);
+  }
+
   return (
-    <form className="flex flex-col gap-md" onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form className="flex flex-col gap-sm" onSubmit={handleSubmit(onSubmit)} noValidate>
       <label className="flex flex-col gap-xs">
         <Label>Correo electrónico</Label>
         <Input
@@ -67,13 +75,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       {formError ? (
         <p
           role="alert"
-          className="rounded-sm bg-danger-container px-3.5 py-3 text-body-sm text-on-danger-container"
+          className="rounded-sm bg-danger-container px-3.5 py-2.5 text-body-sm text-on-danger-container"
         >
           {formError}
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isSubmitting} className="mt-xs">
+      <Button type="submit" disabled={isSubmitting} className="mt-xs w-full">
         {isSubmitting ? (
           <>
             <Loader2 size={20} strokeWidth={1.75} className="animate-spin" />
@@ -83,6 +91,30 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           "Entrar"
         )}
       </Button>
+
+      <div className="pt-sm">
+        <p className="font-caps text-on-surface-variant">Demo</p>
+        <p className="mt-xs text-body-sm text-on-surface-variant">
+          Contraseña: <span className="font-code text-on-surface">{DEMO_PASSWORD}</span>
+        </p>
+        <div className="mt-sm grid grid-cols-3 gap-xs">
+          {demoAccounts.map((account) => (
+            <button
+              key={account.email}
+              type="button"
+              onClick={() => fillDemo(account.email)}
+              className="group rounded-sm bg-surface-container px-xs py-sm text-center ring-1 ring-outline-variant transition-colors duration-feedback hover:bg-primary-container hover:ring-transparent"
+            >
+              <span className="block font-label text-on-surface group-hover:text-on-primary-container">
+                {account.role}
+              </span>
+              <span className="mt-xs block truncate font-code text-on-surface-variant group-hover:text-on-primary-container">
+                {account.email}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
     </form>
   );
 }

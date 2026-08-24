@@ -1,33 +1,15 @@
-import { FileText, FolderOpen, Landmark, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { PageContainer } from "@/components/layout/page-container";
+import { PrefetchCatalog } from "@/components/pilo/prefetch-catalog";
 import { ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { AccessPaths } from "@/features/home/access-paths";
+import { HowItWorks } from "@/features/home/how-it-works";
 import { routes } from "@/lib/routes";
-
-const steps = [
-  {
-    icon: Landmark,
-    title: "Elige el trámite",
-    description:
-      "Consulta el catálogo con los requisitos y plazos de cada trámite. No necesitas cuenta para explorarlo.",
-  },
-  {
-    icon: FileText,
-    title: "Sube los documentos",
-    description:
-      "La IA extrae los datos de cada documento y el sistema los valida contra las reglas del trámite.",
-  },
-  {
-    icon: FolderOpen,
-    title: "Sigue el expediente",
-    description:
-      "Ves el estado de cada requisito, el flujo de revisión y el plazo restante en un único sitio.",
-  },
-];
 
 export default function Home() {
   return (
     <PageContainer>
+      <PrefetchCatalog />
       <section>
         <p className="inline-flex items-center gap-1.5 rounded-full bg-primary-container px-2.5 py-1 font-caps text-on-primary-container">
           <Sparkles size={16} strokeWidth={1.75} />
@@ -48,23 +30,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-section">
-        <h2 className="font-headline-md text-on-surface">Cómo funciona</h2>
-        <div className="mt-md grid gap-md md:grid-cols-3">
-          {steps.map((step, index) => (
-            <Card key={step.title}>
-              <div className="flex items-center justify-between">
-                <span className="grid size-10 place-items-center rounded-md bg-surface-container">
-                  <step.icon size={20} strokeWidth={1.75} className="text-primary" />
-                </span>
-                <span className="font-caps text-outline">0{index + 1}</span>
-              </div>
-              <h3 className="mt-md font-title-md text-on-surface">{step.title}</h3>
-              <p className="mt-xs text-body-sm text-on-surface-variant">{step.description}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
+      <AccessPaths />
+      <HowItWorks />
     </PageContainer>
   );
 }

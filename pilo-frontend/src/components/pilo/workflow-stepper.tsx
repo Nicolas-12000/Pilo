@@ -33,7 +33,7 @@ export function WorkflowStepper({ tasks }: { tasks: WorkflowTask[] }) {
               <span
                 aria-hidden
                 className={cn(
-                  "grid size-7 shrink-0 place-items-center rounded-full font-caps",
+                  "grid size-7 shrink-0 place-items-center rounded-full font-caps transition-colors duration-content",
                   stepStyles[state],
                 )}
               >
@@ -43,7 +43,7 @@ export function WorkflowStepper({ tasks }: { tasks: WorkflowTask[] }) {
                 <span
                   aria-hidden
                   className={cn(
-                    "min-h-8 w-px flex-1",
+                    "min-h-8 w-px flex-1 transition-colors duration-content",
                     state === "done" ? "bg-success/40" : "bg-outline-variant",
                   )}
                 />

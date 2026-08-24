@@ -87,4 +87,14 @@ describe("LoginForm", () => {
     ).toBeInTheDocument();
     expect(persistSessionMock).not.toHaveBeenCalled();
   });
+
+  it("fills credentials from a demo account", async () => {
+    const user = userEvent.setup();
+    render(<LoginForm />);
+
+    await user.click(screen.getByRole("button", { name: /Ciudadano/i }));
+
+    expect(screen.getByLabelText("Correo electrónico")).toHaveValue("user@pilo.test");
+    expect(screen.getByLabelText("Contraseña")).toHaveValue("Password123!");
+  });
 });

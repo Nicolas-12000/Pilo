@@ -93,21 +93,21 @@
   --pilo-on-info-container: #bedcec;
 
   --pilo-background: #1c1712;
-  --pilo-surface: #241e18;
+  --pilo-surface: #2a231c;
   --pilo-surface-dim: #1c1712;
   --pilo-surface-container-low: #241e18;
-  --pilo-surface-container: #2c241d;
-  --pilo-surface-container-high: #352c23;
-  --pilo-surface-container-highest: #3f352a;
+  --pilo-surface-container: #322920;
+  --pilo-surface-container-high: #3c3228;
+  --pilo-surface-container-highest: #463b30;
   --pilo-on-surface: #f2eae2;
   --pilo-on-surface-variant: #c9bcac;
-  --pilo-outline: #5c5044;
-  --pilo-outline-variant: #463c31;
+  --pilo-outline: #7a6c5c;
+  --pilo-outline-variant: #5c5044;
 
   --pilo-overlay: rgba(0, 0, 0, 0.6);
-  --pilo-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --pilo-shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --pilo-shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --pilo-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.28);
+  --pilo-shadow-elevated: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --pilo-shadow-overlay: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
 @theme inline {
@@ -317,6 +317,33 @@
   line-height: 1.5;
 }
 
+@utility elevation-card {
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  outline: 1px solid var(--color-outline-variant);
+  outline-offset: -1px;
+}
+
+@keyframes pilo-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@utility skeleton-fill {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface-container-high) 0%,
+    var(--color-surface-container-highest) 40%,
+    var(--color-surface-container-high) 80%
+  );
+  background-size: 200% 100%;
+  animation: pilo-shimmer 1.4s var(--ease-pilo) infinite;
+}
+
 @utility duration-feedback {
   transition-duration: 120ms;
   transition-timing-function: var(--ease-pilo);
@@ -330,6 +357,26 @@
 @utility duration-page {
   transition-duration: 250ms;
   transition-timing-function: var(--ease-pilo);
+}
+
+@keyframes pilo-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-enter {
+  animation: pilo-enter 250ms var(--ease-pilo) both;
+}
+
+@utility animate-enter-stagger {
+  animation: pilo-enter 250ms var(--ease-pilo) both;
+  animation-delay: calc(var(--stagger, 0) * 40ms);
 }
 
 @utility focus-ring {

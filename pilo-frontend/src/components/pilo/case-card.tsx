@@ -14,7 +14,7 @@ export function CaseCard({ caseItem }: { caseItem: CaseSummary }) {
   return (
     <Link
       href={routes.case(caseItem.id)}
-      className="group block rounded-lg bg-surface p-md shadow-card ring-1 ring-transparent transition-shadow duration-content hover:shadow-elevated hover:ring-outline-variant md:p-lg"
+      className="elevation-card group block rounded-lg p-md transition-[box-shadow,transform,outline-color] duration-content hover:-translate-y-px hover:shadow-elevated hover:outline-outline md:p-lg"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

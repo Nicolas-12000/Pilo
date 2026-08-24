@@ -6,12 +6,13 @@ export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
+  requiresAuth?: boolean;
 };
 
 export const navItems: NavItem[] = [
   { href: routes.home, label: "Inicio", icon: Home },
   { href: routes.procedures, label: "Trámites", icon: Landmark },
-  { href: routes.myCases, label: "Expedientes", icon: FolderOpen },
+  { href: routes.myCases, label: "Expedientes", icon: FolderOpen, requiresAuth: true },
 ];
 
 export function isActivePath(pathname: string, href: string) {

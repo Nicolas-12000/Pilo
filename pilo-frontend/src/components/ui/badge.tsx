@@ -30,7 +30,7 @@ export function Badge({ tone, icon: Icon, spinIcon, children, className }: Badge
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 font-caps",
+        "inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 font-caps transition-colors duration-feedback",
         tone === "external" ? "rounded-sm" : "rounded-full",
         tones[tone],
         className,

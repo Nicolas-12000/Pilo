@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { FolderOpen, Plus, TriangleAlert } from "lucide-react";
+import { StaggerItem } from "@/components/motion/stagger-item";
 import { CaseCard } from "@/components/pilo/case-card";
 import { PageHeader } from "@/components/pilo/page-header";
 import { ButtonLink } from "@/components/ui/button";
@@ -34,7 +35,7 @@ export function MyCasesPanel() {
 
       <div className="mt-xl">
         {isPending ? (
-          <SkeletonList count={3} />
+          <SkeletonList count={3} columns={2} />
         ) : error ? (
           <EmptyState
             icon={TriangleAlert}
@@ -46,8 +47,10 @@ export function MyCasesPanel() {
           />
         ) : data && data.length > 0 ? (
           <div className="grid gap-md md:grid-cols-2">
-            {data.map((caseItem) => (
-              <CaseCard key={caseItem.id} caseItem={caseItem} />
+            {data.map((caseItem, index) => (
+              <StaggerItem key={caseItem.id} index={index}>
+                <CaseCard caseItem={caseItem} />
+              </StaggerItem>
             ))}
           </div>
         ) : (

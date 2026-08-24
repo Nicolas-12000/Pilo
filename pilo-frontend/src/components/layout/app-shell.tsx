@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   if (BARE_ROUTES.some((route) => pathname.startsWith(route))) {
-    return <div className="flex min-h-dvh flex-col">{children}</div>;
+    return <>{children}</>;
   }
 
   return (

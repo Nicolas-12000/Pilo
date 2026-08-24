@@ -5,7 +5,7 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
   return (
     <input
       className={cn(
-        "h-12 w-full rounded-sm bg-surface px-3.5 text-body-md text-on-surface ring-1 ring-outline-variant outline-none transition-shadow duration-feedback placeholder:text-on-surface-variant/70 focus:ring-2 focus:ring-primary",
+        "h-12 w-full rounded-sm bg-surface-container-low px-3.5 text-body-md text-on-surface ring-1 ring-outline outline-none transition-shadow duration-feedback placeholder:text-on-surface-variant/70 focus:ring-2 focus:ring-primary",
         "aria-invalid:bg-danger-container aria-invalid:text-on-danger-container aria-invalid:ring-danger",
         className,
       )}

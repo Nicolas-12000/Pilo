@@ -25,7 +25,7 @@ export function EmptyState({
         "flex flex-col items-center rounded-lg px-md py-xxl text-center",
         tone === "danger"
           ? "bg-danger-container text-on-danger-container"
-          : "text-on-surface-variant",
+          : "elevation-card text-on-surface-variant",
         className,
       )}
     >

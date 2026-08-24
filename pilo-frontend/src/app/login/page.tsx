@@ -6,7 +6,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-1 items-center justify-center px-md text-on-surface-variant">
+        <div className="flex h-dvh items-center justify-center px-md text-on-surface-variant">
           <Loader2 size={24} strokeWidth={1.75} className="animate-spin" />
         </div>
       }

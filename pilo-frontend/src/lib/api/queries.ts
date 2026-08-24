@@ -9,6 +9,12 @@ export const caseKeys = {
   bundle: (caseId: string) => [...caseKeys.all, "bundle", caseId] as const,
 };
 
+export const procedureKeys = {
+  all: ["procedures"] as const,
+  list: () => [...procedureKeys.all, "list"] as const,
+  detail: (id: string) => [...procedureKeys.all, "detail", id] as const,
+};
+
 export type CaseBundle = {
   detail: CaseDetail;
   workflow: Workflow;

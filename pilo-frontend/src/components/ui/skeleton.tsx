@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils/cn";
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-sm bg-surface-container-high", className)} />;
+  return <div className={cn("skeleton-fill rounded-sm", className)} />;
 }
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-lg bg-surface p-md shadow-card md:p-lg">
+    <div className="elevation-card rounded-lg p-md md:p-lg">
       <Skeleton className="h-3 w-24" />
       <Skeleton className="mt-3 h-5 w-2/3" />
       <Skeleton className="mt-4 h-2 w-full rounded-full" />
@@ -18,9 +18,9 @@ export function SkeletonCard() {
   );
 }
 
-export function SkeletonList({ count = 3 }: { count?: number }) {
+export function SkeletonList({ count = 3, columns = 1 }: { count?: number; columns?: 1 | 2 }) {
   return (
-    <div className="grid gap-4">
+    <div className={cn("grid gap-md", columns === 2 && "md:grid-cols-2")}>
       {Array.from({ length: count }, (_, index) => (
         <SkeletonCard key={index} />
       ))}

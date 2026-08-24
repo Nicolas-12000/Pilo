@@ -7,7 +7,7 @@ export function ProcedureCard({ procedure }: { procedure: ProcedureTypeSummary }
   return (
     <Link
       href={routes.procedure(procedure.id)}
-      className="group flex flex-col rounded-lg bg-surface p-md shadow-card ring-1 ring-transparent transition-shadow duration-content hover:shadow-elevated hover:ring-outline-variant md:p-lg"
+      className="elevation-card group flex flex-col rounded-lg p-md transition-[box-shadow,transform,outline-color] duration-content hover:-translate-y-px hover:shadow-elevated hover:outline-outline md:p-lg"
     >
       <h2 className="font-title-md text-on-surface">{procedure.title}</h2>
       <p className="mt-xs line-clamp-3 text-body-sm text-on-surface-variant">
