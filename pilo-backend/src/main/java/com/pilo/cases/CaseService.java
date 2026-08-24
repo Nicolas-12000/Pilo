@@ -134,7 +134,7 @@ public class CaseService {
 				.map(document -> switch (document.getStatus()) {
 					case VALIDATED -> "FULFILLED";
 					case REJECTED, PROCESSING_FAILED -> "REJECTED";
-					case PROCESSING -> "PROCESSING";
+					case PROCESSING, PENDING_UPLOAD -> "PROCESSING";
 					default -> "UPLOADED";
 				})
 				.orElse("PENDING");
