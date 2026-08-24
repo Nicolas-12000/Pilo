@@ -15,6 +15,10 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
 
 server:
   address: ${SERVER_ADDRESS:0.0.0.0}
@@ -37,6 +41,14 @@ pilo:
     allowed-origins: ${PILO_CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
   seed:
     enabled: false
+  storage:
+    local-path: ${PILO_STORAGE_PATH:./storage}
+  ai:
+    gemini-api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-2.0-flash}
+    min-confidence: 0.5
+  internal:
+    api-key: ${PILO_INTERNAL_API_KEY:dev-internal-key}
 
 ---
 spring:

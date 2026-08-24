@@ -1,5 +1,6 @@
 package com.pilo.auth;
 
+import com.pilo.ai.InternalApiKeyFilter;
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -31,16 +32,21 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter)
+	SecurityFilterChain securityFilterChain(
+			HttpSecurity http, InternalApiKeyFilter internalApiKeyFilter, JwtAuthenticationFilter jwtAuthenticationFilter)
 			throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable)
 				.cors(Customizer.withDefaults())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**")
 						.permitAll()
+						.requestMatchers("/internal/**")
+						.permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/v1/auth/login")
 						.permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/procedures/types", "/api/v1/procedures/types/**")
+						.permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/v1/integrations/**")
 						.permitAll()
 						.requestMatchers("/actuator/health", "/actuator/health/**")
 						.permitAll()
@@ -48,6 +54,7 @@ public class SecurityConfig {
 						.authenticated())
 				.exceptionHandling(exceptions ->
 						exceptions.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+				.addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
