@@ -25,7 +25,7 @@ class DocumentValidationServiceTest {
 				new ValidationRulesParser(objectMapper),
 				objectMapper,
 				List.of(
-						new ConfidenceRule(new AiProperties("", "gemini-2.0-flash", 0.5)),
+						new ConfidenceRule(new AiProperties("mock", "", "gemini-2.0-flash", 0.5)),
 						new ExpectedDocumentTypeRule(),
 						new FutureExpirationRule()));
 	}

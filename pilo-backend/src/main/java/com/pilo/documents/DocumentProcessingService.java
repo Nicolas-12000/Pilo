@@ -1,11 +1,13 @@
 package com.pilo.documents;
 
 import com.pilo.ai.ExtractionHint;
-import com.pilo.ai.GeminiExtractionClient;
 import com.pilo.ai.StructuredExtraction;
+import com.pilo.ai.StructuredExtractionClient;
 import com.pilo.audit.AuditService;
+import com.pilo.documents.storage.ObjectStorage;
 import com.pilo.documents.validation.ValidationRulesParser;
 import com.pilo.workflows.WorkflowService;
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -16,8 +18,8 @@ public class DocumentProcessingService {
 
 	private final DocumentRepository documentRepository;
 	private final DocumentExtractionRepository documentExtractionRepository;
-	private final LocalDocumentStorage localDocumentStorage;
-	private final GeminiExtractionClient geminiExtractionClient;
+	private final ObjectStorage objectStorage;
+	private final StructuredExtractionClient structuredExtractionClient;
 	private final DocumentValidationService documentValidationService;
 	private final ValidationRulesParser validationRulesParser;
 	private final WorkflowService workflowService;
@@ -26,16 +28,16 @@ public class DocumentProcessingService {
 	public DocumentProcessingService(
 			DocumentRepository documentRepository,
 			DocumentExtractionRepository documentExtractionRepository,
-			LocalDocumentStorage localDocumentStorage,
-			GeminiExtractionClient geminiExtractionClient,
+			ObjectStorage objectStorage,
+			StructuredExtractionClient structuredExtractionClient,
 			DocumentValidationService documentValidationService,
 			ValidationRulesParser validationRulesParser,
 			WorkflowService workflowService,
 			AuditService auditService) {
 		this.documentRepository = documentRepository;
 		this.documentExtractionRepository = documentExtractionRepository;
-		this.localDocumentStorage = localDocumentStorage;
-		this.geminiExtractionClient = geminiExtractionClient;
+		this.objectStorage = objectStorage;
+		this.structuredExtractionClient = structuredExtractionClient;
 		this.documentValidationService = documentValidationService;
 		this.validationRulesParser = validationRulesParser;
 		this.workflowService = workflowService;
@@ -45,22 +47,33 @@ public class DocumentProcessingService {
 	public void process(UUID documentId) {
 		ProcessingContext context = markProcessing(documentId);
 		try {
-			StructuredExtraction extraction = geminiExtractionClient.extract(
-					localDocumentStorage.resolve(context.caseId(), context.storageKey()),
-					context.mimeType(),
-					new ExtractionHint(context.requirementCode(), context.expectedDocumentType()));
+			StructuredExtraction extraction = extract(context);
 			applyExtraction(documentId, extraction);
 		} catch (Exception exception) {
 			markFailed(documentId, exception.getMessage());
 		}
 	}
 
+	private StructuredExtraction extract(ProcessingContext context) throws IOException {
+		try (var stored = objectStorage.open(context.storageKey())) {
+			byte[] content = stored.content().readAllBytes();
+			return structuredExtractionClient.extract(new StructuredExtractionClient.ExtractionInput(
+					content,
+					context.mimeType(),
+					new ExtractionHint(context.requirementCode(), context.expectedDocumentType())));
+		}
+	}
+
 	@Transactional
 	public ProcessingContext markProcessing(UUID documentId) {
 		Document document = documentRepository.findForProcessing(documentId).orElseThrow();
+		if (document.getStatus() != DocumentStatus.UPLOADED && document.getStatus() != DocumentStatus.PENDING_UPLOAD) {
+			throw new IllegalStateException("DOCUMENT_NOT_READY_FOR_PROCESSING");
+		}
 		document.setStatus(DocumentStatus.PROCESSING);
 		documentRepository.save(document);
 		return new ProcessingContext(
+				document.getId(),
 				document.getProcedureCase().getId(),
 				document.getStorageKey(),
 				document.getMimeType(),
@@ -111,6 +124,7 @@ public class DocumentProcessingService {
 	}
 
 	public record ProcessingContext(
+			UUID documentId,
 			UUID caseId,
 			String storageKey,
 			String mimeType,
