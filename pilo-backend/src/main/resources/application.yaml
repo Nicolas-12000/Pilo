@@ -42,8 +42,16 @@ pilo:
   seed:
     enabled: false
   storage:
+    provider: ${PILO_STORAGE_PROVIDER:local}
     local-path: ${PILO_STORAGE_PATH:./storage}
+    bucket: ${PILO_S3_BUCKET:}
+    region: ${AWS_REGION:eu-west-1}
+    endpoint: ${PILO_S3_ENDPOINT:}
+    presigned-url-expiration: ${PILO_PRESIGNED_URL_EXPIRATION:15m}
+  processing:
+    mode: ${PILO_PROCESSING_MODE:inline}
   ai:
+    provider: ${PILO_AI_PROVIDER:mock}
     gemini-api-key: ${GEMINI_API_KEY:}
     model: ${GEMINI_MODEL:gemini-2.0-flash}
     min-confidence: 0.5
@@ -58,3 +66,22 @@ spring:
 pilo:
   seed:
     enabled: true
+  storage:
+    provider: local
+  processing:
+    mode: inline
+  ai:
+    provider: ${PILO_AI_PROVIDER:mock}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: aws
+pilo:
+  seed:
+    enabled: false
+  storage:
+    provider: s3
+  processing:
+    mode: external
