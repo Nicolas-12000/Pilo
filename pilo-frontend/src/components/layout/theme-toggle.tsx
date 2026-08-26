@@ -2,7 +2,7 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { useIsHydrated } from "@/lib/utils/use-is-hydrated";
@@ -13,18 +13,17 @@ export function ThemeToggle({ className }: { className?: string }) {
   const isDark = isHydrated && resolvedTheme === "dark";
   const [iconKey, setIconKey] = useState(0);
 
-  useEffect(() => {
-    if (isHydrated) {
-      setIconKey((key) => key + 1);
-    }
-  }, [isDark, isHydrated]);
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark");
+    setIconKey((key) => key + 1);
+  };
 
   return (
     <Button
       variant="secondary"
       size="icon"
       aria-label={isDark ? "Activar tema claro" : "Activar tema oscuro"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={toggleTheme}
       className={cn(
         "relative overflow-hidden ring-0 transition-[background-color,box-shadow] duration-content",
         isDark
