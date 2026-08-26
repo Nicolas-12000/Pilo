@@ -17,9 +17,11 @@ async function readApiError(response: Response) {
   throw new ApiError(body?.message ?? "No se ha podido completar la petición.", response.status, body?.error);
 }
 
+// Public, non-user-specific catalog: safe to let Next's fetch cache serve it for a short
+// window across requests/users, cutting load on the backend without risking stale per-user data.
 export async function listProcedureTypes(): Promise<ProcedureTypeSummary[]> {
   const response = await fetch(`${getApiUrl()}/api/v1/procedures/types`, {
-    cache: "no-store",
+    next: { revalidate: 60 },
   });
 
   if (!response.ok) {
@@ -31,7 +33,7 @@ export async function listProcedureTypes(): Promise<ProcedureTypeSummary[]> {
 
 export async function getProcedureType(id: string): Promise<ProcedureTypeDetail> {
   const response = await fetch(`${getApiUrl()}/api/v1/procedures/types/${id}`, {
-    cache: "no-store",
+    next: { revalidate: 60 },
   });
 
   if (!response.ok) {

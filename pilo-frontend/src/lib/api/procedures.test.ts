@@ -28,7 +28,7 @@ describe("listProcedureTypes", () => {
 
     expect(fetch).toHaveBeenCalledWith(
       `${getApiUrl()}/api/v1/procedures/types`,
-      expect.objectContaining({ cache: "no-store" }),
+      expect.objectContaining({ next: { revalidate: 60 } }),
     );
     expect(procedures).toHaveLength(1);
     expect(procedures[0]?.title).toBe("Registro de contrato de alquiler");
