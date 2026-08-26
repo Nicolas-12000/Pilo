@@ -58,7 +58,7 @@ function FieldRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-body-sm text-on-surface-variant">{label}</p>
-      <p className="mt-xxs break-words font-label text-on-surface">{value}</p>
+      <p className="mt-xxs wrap-break-word font-label text-on-surface">{value}</p>
     </div>
   );
 }
