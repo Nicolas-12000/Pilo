@@ -38,7 +38,7 @@ pilo:
     secret: ${PILO_JWT_SECRET:dev-only-change-me-to-a-256-bit-secret-key!!}
     expiration: ${PILO_JWT_EXPIRATION:24h}
   cors:
-    allowed-origins: ${PILO_CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
+    allowed-origins: ${PILO_CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001}
   seed:
     enabled: false
   storage:
