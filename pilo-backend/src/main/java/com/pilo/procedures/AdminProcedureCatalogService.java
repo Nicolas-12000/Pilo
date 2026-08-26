@@ -2,6 +2,7 @@ package com.pilo.procedures;
 
 import com.pilo.audit.AuditService;
 import com.pilo.cases.ProcedureCaseRepository;
+import com.pilo.common.CacheNames;
 import com.pilo.documents.DocumentRepository;
 import com.pilo.documents.validation.ValidationRulesParser;
 import com.pilo.users.User;
@@ -11,6 +12,7 @@ import com.pilo.workflows.WorkflowDefinitionService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +63,7 @@ public class AdminProcedureCatalogService {
 				procedureType, procedureCaseRepository.existsByProcedureTypeId(id), validationRulesParser);
 	}
 
+	@CacheEvict(cacheNames = CacheNames.PROCEDURE_CATALOG, allEntries = true)
 	@Transactional
 	public AdminProcedureTypeDetailResponse create(UUID actorId, CreateProcedureTypeRequest request) {
 		User actor = requireUser(actorId);
@@ -75,6 +78,7 @@ public class AdminProcedureCatalogService {
 		return getById(procedureType.getId());
 	}
 
+	@CacheEvict(cacheNames = CacheNames.PROCEDURE_CATALOG, allEntries = true)
 	@Transactional
 	public AdminProcedureTypeDetailResponse update(UUID actorId, UUID id, UpdateProcedureTypeRequest request) {
 		User actor = requireUser(actorId);
@@ -88,6 +92,7 @@ public class AdminProcedureCatalogService {
 		return getById(id);
 	}
 
+	@CacheEvict(cacheNames = CacheNames.PROCEDURE_CATALOG, allEntries = true)
 	@Transactional
 	public AdminRequirementResponse addRequirement(UUID actorId, UUID procedureTypeId, CreateRequirementRequest request) {
 		User actor = requireUser(actorId);
@@ -110,6 +115,7 @@ public class AdminProcedureCatalogService {
 		return AdminRequirementResponse.from(requirement, validationRulesParser);
 	}
 
+	@CacheEvict(cacheNames = CacheNames.PROCEDURE_CATALOG, allEntries = true)
 	@Transactional
 	public AdminRequirementResponse updateRequirement(
 			UUID actorId, UUID procedureTypeId, UUID requirementId, UpdateRequirementRequest request) {
@@ -125,6 +131,7 @@ public class AdminProcedureCatalogService {
 		return AdminRequirementResponse.from(requirement, validationRulesParser);
 	}
 
+	@CacheEvict(cacheNames = CacheNames.PROCEDURE_CATALOG, allEntries = true)
 	@Transactional
 	public void deleteRequirement(UUID actorId, UUID procedureTypeId, UUID requirementId) {
 		User actor = requireUser(actorId);
