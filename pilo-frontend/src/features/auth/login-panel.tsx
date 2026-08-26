@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Brand } from "@/components/layout/brand";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LoginForm } from "@/features/auth/login-form";
-import { routes } from "@/lib/routes";
+import { isSafeRedirectPath, routes } from "@/lib/routes";
 
 const afterLogin = [
   {
@@ -125,9 +125,7 @@ export function LoginPanel() {
                   <div className="mt-lg">
                     <LoginForm
                       onSuccess={() => {
-                        router.push(
-                          nextPath && nextPath.startsWith("/") ? nextPath : routes.myCases,
-                        );
+                        router.push(isSafeRedirectPath(nextPath) ? nextPath : routes.myCases);
                       }}
                     />
                   </div>

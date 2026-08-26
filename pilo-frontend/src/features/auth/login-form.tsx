@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label } from "@/components/ui/field";
 import { ApiError, login } from "@/lib/api/auth";
-import { DEMO_PASSWORD, demoAccounts } from "@/lib/auth/demo-accounts";
+import { DEMO_PASSWORD, demoAccounts, isDemoLoginEnabled } from "@/lib/auth/demo-accounts";
 import { persistSession } from "@/lib/auth/session";
 import { loginSchema, type LoginValues } from "@/lib/auth/login-schema";
 
@@ -92,29 +92,31 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         )}
       </Button>
 
-      <div className="pt-sm">
-        <p className="font-caps text-on-surface-variant">Demo</p>
-        <p className="mt-xs text-body-sm text-on-surface-variant">
-          Contraseña: <span className="font-code text-on-surface">{DEMO_PASSWORD}</span>
-        </p>
-        <div className="mt-sm grid grid-cols-3 gap-xs">
-          {demoAccounts.map((account) => (
-            <button
-              key={account.email}
-              type="button"
-              onClick={() => fillDemo(account.email)}
-              className="group rounded-sm bg-surface-container px-xs py-sm text-center ring-1 ring-outline-variant transition-colors duration-feedback hover:bg-primary-container hover:ring-transparent"
-            >
-              <span className="block font-label text-on-surface group-hover:text-on-primary-container">
-                {account.role}
-              </span>
-              <span className="mt-xs block truncate font-code text-on-surface-variant group-hover:text-on-primary-container">
-                {account.email}
-              </span>
-            </button>
-          ))}
+      {isDemoLoginEnabled ? (
+        <div className="pt-sm">
+          <p className="font-caps text-on-surface-variant">Demo</p>
+          <p className="mt-xs text-body-sm text-on-surface-variant">
+            Contraseña: <span className="font-code text-on-surface">{DEMO_PASSWORD}</span>
+          </p>
+          <div className="mt-sm grid grid-cols-3 gap-xs">
+            {demoAccounts.map((account) => (
+              <button
+                key={account.email}
+                type="button"
+                onClick={() => fillDemo(account.email)}
+                className="group rounded-sm bg-surface-container px-xs py-sm text-center ring-1 ring-outline-variant transition-colors duration-feedback hover:bg-primary-container hover:ring-transparent"
+              >
+                <span className="block font-label text-on-surface group-hover:text-on-primary-container">
+                  {account.role}
+                </span>
+                <span className="mt-xs block truncate font-code text-on-surface-variant group-hover:text-on-primary-container">
+                  {account.email}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
     </form>
   );
 }
