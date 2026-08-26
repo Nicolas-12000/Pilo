@@ -56,6 +56,11 @@ public class LocalObjectStorage implements ObjectStorage {
 	}
 
 	private Path resolvePath(String storageKey) {
-		return Path.of(storageProperties.localPath()).resolve(storageKey);
+		Path base = Path.of(storageProperties.localPath()).toAbsolutePath().normalize();
+		Path target = base.resolve(storageKey).normalize();
+		if (!target.startsWith(base)) {
+			throw new StorageException("INVALID_STORAGE_KEY", null);
+		}
+		return target;
 	}
 }

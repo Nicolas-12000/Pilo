@@ -27,6 +27,17 @@ public final class StorageKeyFactory {
 		if (fileName == null || fileName.isBlank()) {
 			return "upload.bin";
 		}
-		return fileName.replaceAll("[^a-zA-Z0-9._-]", "_");
+		// Strip any directory components the client may have sent; only the leaf name is kept.
+		String baseName = fileName.replace('\\', '/');
+		int lastSlash = baseName.lastIndexOf('/');
+		if (lastSlash >= 0) {
+			baseName = baseName.substring(lastSlash + 1);
+		}
+		String sanitized = baseName.replaceAll("[^a-zA-Z0-9._-]", "_");
+		// Reject filenames that are only dots (".", "..", "...") to prevent path traversal.
+		if (sanitized.isBlank() || sanitized.chars().allMatch(c -> c == '.')) {
+			return "upload.bin";
+		}
+		return sanitized;
 	}
 }
