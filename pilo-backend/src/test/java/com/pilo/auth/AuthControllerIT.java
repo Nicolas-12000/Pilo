@@ -2,6 +2,7 @@ package com.pilo.auth;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -113,6 +114,80 @@ class AuthControllerIT extends AbstractIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.email").value("user@pilo.test"))
 				.andExpect(jsonPath("$.role").value("USER"));
+	}
+
+	private String loginAndGetToken() throws Exception {
+		String body = mockMvc.perform(post("/api/v1/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"email":"user@pilo.test","password":"Password123!"}
+								"""))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+		return body.replaceAll(".*\"accessToken\":\"([^\"]+)\".*", "$1");
+	}
+
+	@Test
+	void updateProfileChangesFullName() throws Exception {
+		String token = loginAndGetToken();
+
+		mockMvc.perform(patch("/api/v1/auth/me")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"fullName":"Ana Actualizada"}
+								"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.fullName").value("Ana Actualizada"));
+	}
+
+	@Test
+	void updateProfileRejectsBlankName() throws Exception {
+		String token = loginAndGetToken();
+
+		mockMvc.perform(patch("/api/v1/auth/me")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"fullName":""}
+								"""))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void changePasswordUpdatesCredentials() throws Exception {
+		String token = loginAndGetToken();
+
+		mockMvc.perform(post("/api/v1/auth/me/password")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"currentPassword":"Password123!","newPassword":"NewPassword456!"}
+								"""))
+				.andExpect(status().isNoContent());
+
+		mockMvc.perform(post("/api/v1/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"email":"user@pilo.test","password":"NewPassword456!"}
+								"""))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	void changePasswordRejectsWrongCurrentPassword() throws Exception {
+		String token = loginAndGetToken();
+
+		mockMvc.perform(post("/api/v1/auth/me/password")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"currentPassword":"WrongPassword!","newPassword":"NewPassword456!"}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.error").value("INVALID_CURRENT_PASSWORD"));
 	}
 
 	@Test

@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,5 +51,20 @@ public class AuthController {
 				.findById(userId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 		return UserResponse.from(user);
+	}
+
+	@PatchMapping("/me")
+	public UserResponse updateProfile(
+			Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
+		UUID userId = UUID.fromString(authentication.getName());
+		return authService.updateProfile(userId, request);
+	}
+
+	@PostMapping("/me/password")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void changePassword(
+			Authentication authentication, @Valid @RequestBody ChangePasswordRequest request) {
+		UUID userId = UUID.fromString(authentication.getName());
+		authService.changePassword(userId, request);
 	}
 }

@@ -2,9 +2,12 @@ package com.pilo.auth;
 
 import com.pilo.users.User;
 import com.pilo.users.UserRepository;
+import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
@@ -41,5 +44,25 @@ public class AuthService {
 				"Bearer",
 				jwtProperties.expiration().toSeconds(),
 				UserResponse.from(user));
+	}
+
+	@Transactional
+	public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
+		User user = userRepository
+				.findById(userId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+		user.setFullName(request.fullName().trim());
+		return UserResponse.from(user);
+	}
+
+	@Transactional
+	public void changePassword(UUID userId, ChangePasswordRequest request) {
+		User user = userRepository
+				.findById(userId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+		if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+			throw new InvalidCurrentPasswordException();
+		}
+		user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
 	}
 }

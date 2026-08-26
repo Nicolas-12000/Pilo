@@ -1,6 +1,7 @@
 package com.pilo.common;
 
 import com.pilo.auth.InvalidCredentialsException;
+import com.pilo.auth.InvalidCurrentPasswordException;
 import com.pilo.auth.TooManyLoginAttemptsException;
 import com.pilo.procedures.ProcedureTypeNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,12 @@ public class ApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 				.body(new ApiError(
 						"INVALID_CREDENTIALS", "El correo o la contraseña no son correctos."));
+	}
+
+	@ExceptionHandler(InvalidCurrentPasswordException.class)
+	ResponseEntity<ApiError> handleInvalidCurrentPassword(InvalidCurrentPasswordException ignored) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(new ApiError("INVALID_CURRENT_PASSWORD", "La contraseña actual no es correcta."));
 	}
 
 	@ExceptionHandler(TooManyLoginAttemptsException.class)
