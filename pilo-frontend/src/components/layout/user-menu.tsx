@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, User as UserIcon } from "lucide-react";
+import { FolderOpen, LogOut, Settings2, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
@@ -63,10 +63,20 @@ export function UserMenu({ className }: { className?: string }) {
           <p className="mt-0.5 text-body-sm text-on-surface-variant">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => router.push(routes.myCases)}>
+        <DropdownMenuItem onSelect={() => router.push(routes.profile)}>
           <UserIcon size={20} strokeWidth={1.75} />
+          Mi perfil
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => router.push(routes.myCases)}>
+          <FolderOpen size={20} strokeWidth={1.75} />
           Mis expedientes
         </DropdownMenuItem>
+        {user.role === "ADMIN" ? (
+          <DropdownMenuItem onSelect={() => router.push(routes.adminProcedures)}>
+            <Settings2 size={20} strokeWidth={1.75} />
+            Administración
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem
           onSelect={() => {
             signOut();

@@ -1,7 +1,9 @@
 import type { LoginValues } from "@/lib/auth/login-schema";
-import type { ApiErrorBody, LoginResponse } from "./types";
+import { authFetch, readApiError } from "@/lib/api/client";
+import { getApiUrl } from "@/lib/api/config";
+import type { ApiErrorBody, LoginResponse, User } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const API_URL = getApiUrl();
 
 export class ApiError extends Error {
   constructor(
@@ -31,4 +33,40 @@ export async function login(values: LoginValues): Promise<LoginResponse> {
   }
 
   return (await response.json()) as LoginResponse;
+}
+
+export async function fetchCurrentUser(): Promise<User> {
+  const response = await authFetch(`${API_URL}/api/v1/auth/me`);
+
+  if (!response.ok) {
+    await readApiError(response);
+  }
+
+  return (await response.json()) as User;
+}
+
+export async function updateProfile(fullName: string): Promise<User> {
+  const response = await authFetch(`${API_URL}/api/v1/auth/me`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fullName }),
+  });
+
+  if (!response.ok) {
+    await readApiError(response);
+  }
+
+  return (await response.json()) as User;
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await authFetch(`${API_URL}/api/v1/auth/me/password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+  if (!response.ok) {
+    await readApiError(response);
+  }
 }

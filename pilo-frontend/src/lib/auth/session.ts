@@ -1,4 +1,4 @@
-import type { LoginResponse } from "@/lib/api/types";
+import type { LoginResponse, User } from "@/lib/api/types";
 
 const TOKEN_KEY = "pilo.accessToken";
 const USER_KEY = "pilo.user";
@@ -12,6 +12,11 @@ function notifySessionChange() {
 export function persistSession(response: LoginResponse) {
   window.sessionStorage.setItem(TOKEN_KEY, response.accessToken);
   window.sessionStorage.setItem(USER_KEY, JSON.stringify(response.user));
+  notifySessionChange();
+}
+
+export function updateStoredUser(user: User) {
+  window.sessionStorage.setItem(USER_KEY, JSON.stringify(user));
   notifySessionChange();
 }
 
