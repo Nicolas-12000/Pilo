@@ -8,7 +8,6 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { isActivePath } from "@/components/layout/nav-items";
 import { useNavItems } from "@/components/layout/use-nav-items";
 import { cn } from "@/lib/utils/cn";
-import { routes } from "@/lib/routes";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -20,10 +19,7 @@ export function Sidebar() {
 
       <nav className="mt-xl flex flex-col gap-1" aria-label="Navegación principal">
         {items.map((item) => {
-          const active = isActivePath(
-            pathname,
-            item.requiresAuth ? routes.myCases : item.href,
-          );
+          const active = isActivePath(pathname, item.href);
           return (
             <Link
               key={item.label}
