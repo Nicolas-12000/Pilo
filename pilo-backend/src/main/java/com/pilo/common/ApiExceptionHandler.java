@@ -1,6 +1,7 @@
 package com.pilo.common;
 
 import com.pilo.auth.InvalidCredentialsException;
+import com.pilo.auth.TooManyLoginAttemptsException;
 import com.pilo.procedures.ProcedureTypeNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,13 @@ public class ApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 				.body(new ApiError(
 						"INVALID_CREDENTIALS", "El correo o la contraseña no son correctos."));
+	}
+
+	@ExceptionHandler(TooManyLoginAttemptsException.class)
+	ResponseEntity<ApiError> handleTooManyLoginAttempts(TooManyLoginAttemptsException ignored) {
+		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+				.body(new ApiError(
+						"TOO_MANY_LOGIN_ATTEMPTS", "Demasiados intentos. Inténtalo de nuevo en unos minutos."));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

@@ -2,6 +2,7 @@ package com.pilo.auth;
 
 import com.pilo.users.User;
 import com.pilo.users.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -20,14 +21,24 @@ public class AuthController {
 
 	private final AuthService authService;
 	private final UserRepository userRepository;
+	private final LoginRateLimiter loginRateLimiter;
 
-	public AuthController(AuthService authService, UserRepository userRepository) {
+	public AuthController(
+			AuthService authService, UserRepository userRepository, LoginRateLimiter loginRateLimiter) {
 		this.authService = authService;
 		this.userRepository = userRepository;
+		this.loginRateLimiter = loginRateLimiter;
 	}
 
 	@PostMapping("/login")
-	public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+	public LoginResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+		// Uses the direct socket address rather than X-Forwarded-For: trusting a client-supplied
+		// header here would let an attacker spoof a fresh IP on every request and bypass the limiter.
+		// If this app is deployed behind a trusted reverse proxy, resolve the real client IP there
+		// (e.g. via server.forward-headers-strategy) instead of trusting the header per-request.
+		if (!loginRateLimiter.tryAcquire(httpRequest.getRemoteAddr())) {
+			throw new TooManyLoginAttemptsException();
+		}
 		return authService.login(request);
 	}
 
