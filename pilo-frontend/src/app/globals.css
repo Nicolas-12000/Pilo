@@ -365,6 +365,25 @@
   transition-timing-function: var(--ease-pilo);
 }
 
+@keyframes pilo-theme-icon {
+  0% {
+    transform: rotate(-72deg) scale(0.55);
+    opacity: 0;
+  }
+  55% {
+    transform: rotate(6deg) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@utility animate-theme-icon {
+  animation: pilo-theme-icon 320ms var(--ease-pilo) both;
+}
+
 @keyframes pilo-enter {
   from {
     opacity: 0;
