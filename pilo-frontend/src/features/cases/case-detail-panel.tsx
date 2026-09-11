@@ -14,9 +14,11 @@ import { Skeleton, SkeletonList } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api/client";
 import { caseKeys, fetchCaseBundle, hasWorkInProgress } from "@/lib/api/queries";
 import type { DocumentRecord } from "@/lib/api/types";
+import { useSession } from "@/lib/auth/use-session";
 import { describeDeadline, formatDate } from "@/lib/cases/dates";
 import { caseStatus } from "@/lib/cases/status";
 import { ExternalReferences } from "@/features/cases/external-references";
+import { FinalReviewActions } from "@/features/cases/final-review-actions";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils/cn";
 
@@ -30,6 +32,7 @@ function documentsByRequirement(documents: DocumentRecord[]) {
 }
 
 export function CaseDetailPanel({ caseId }: { caseId: string }) {
+  const { user } = useSession();
   const { data, isPending, error, refetch, isFetching } = useQuery({
     queryKey: caseKeys.bundle(caseId),
     queryFn: () => fetchCaseBundle(caseId),
@@ -65,12 +68,13 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
   const deadline = describeDeadline(detail.deadlineAt);
   const grouped = documentsByRequirement(documents);
   const processing = hasWorkInProgress(data);
+  const canReview = user?.role === "REVIEWER" || user?.role === "ADMIN";
 
   return (
     <>
       <PageHeader
-        backHref={routes.myCases}
-        backLabel="Mis expedientes"
+        backHref={canReview ? routes.review : routes.myCases}
+        backLabel={canReview ? "Revisión" : "Mis expedientes"}
         title={detail.procedureTypeTitle}
         description={detail.procedureTypeDescription}
         actions={<StatusBadge status={caseStatus[detail.status]} />}
@@ -80,6 +84,13 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
 
       <div className="mt-xl grid gap-lg lg:grid-cols-[1fr_296px] lg:items-start">
         <div className="flex flex-col gap-lg">
+          <FinalReviewActions
+            caseId={caseId}
+            detail={detail}
+            canReview={canReview}
+            onReviewed={() => void refetch()}
+          />
+
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-sm">
               <CardTitle>Requisitos y documentos</CardTitle>

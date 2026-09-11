@@ -74,6 +74,9 @@ export async function uploadDocument(
       mimeType: file.type || "application/octet-stream",
       fileSize: file.size,
       status: "PENDING_UPLOAD",
+      extraction: null,
+      validationFailures: [],
+      processingFailureReason: null,
     };
   }
 

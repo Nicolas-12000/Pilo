@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
-import { searchBoe, searchDatos } from "@/lib/api/integrations";
+import { searchBoe, searchDatos, searchSia } from "@/lib/api/integrations";
 import type { ExternalReference } from "@/lib/api/types";
 
 type ExternalReferencesProps = {
@@ -17,6 +17,7 @@ type ExternalReferencesProps = {
 type Results = {
   boe: ExternalReference[];
   datos: ExternalReference[];
+  sia: ExternalReference[];
 };
 
 export function ExternalReferences({ defaultQuery }: ExternalReferencesProps) {
@@ -33,8 +34,12 @@ export function ExternalReferences({ defaultQuery }: ExternalReferencesProps) {
 
     setLoading(true);
     try {
-      const [boe, datos] = await Promise.all([searchBoe(term), searchDatos(term)]);
-      setResults({ boe, datos });
+      const [boe, datos, sia] = await Promise.all([
+        searchBoe(term),
+        searchDatos(term),
+        searchSia(term),
+      ]);
+      setResults({ boe, datos, sia });
     } catch {
       toast.error("No se han podido consultar las fuentes externas.");
     } finally {
@@ -49,7 +54,8 @@ export function ExternalReferences({ defaultQuery }: ExternalReferencesProps) {
         <div>
           <CardTitle>Referencias externas</CardTitle>
           <CardDescription className="mt-1">
-            Normativa del BOE y datasets abiertos de datos.gob.es relacionados con el trámite.
+            Normativa del BOE, datasets de datos.gob.es y referencias del SIA relacionadas con el
+            trámite.
           </CardDescription>
         </div>
       </div>
@@ -58,7 +64,7 @@ export function ExternalReferences({ defaultQuery }: ExternalReferencesProps) {
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Buscar normativa o datasets…"
+          placeholder="Buscar normativa, datasets o procedimientos…"
           aria-label="Término de búsqueda"
           className="min-w-55 flex-1"
         />
@@ -73,9 +79,10 @@ export function ExternalReferences({ defaultQuery }: ExternalReferencesProps) {
       </form>
 
       {results ? (
-        <div className="mt-md grid gap-md md:grid-cols-2">
+        <div className="mt-md grid gap-md lg:grid-cols-3">
           <ResultList source="BOE" results={results.boe} />
           <ResultList source="datos.gob.es" results={results.datos} />
+          <ResultList source="SIA" results={results.sia} />
         </div>
       ) : null}
     </Card>
@@ -96,7 +103,21 @@ function ResultList({ source, results }: { source: string; results: ExternalRefe
               className="rounded-sm bg-surface-container-low p-sm"
             >
               <p className="font-code text-secondary">{item.externalId}</p>
-              <p className="mt-1 text-body-sm text-on-surface">{item.title}</p>
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 block text-body-sm text-primary hover:underline"
+                >
+                  {item.title}
+                </a>
+              ) : (
+                <p className="mt-1 text-body-sm text-on-surface">{item.title}</p>
+              )}
+              {item.snippet ? (
+                <p className="mt-1 text-body-sm text-on-surface-variant">{item.snippet}</p>
+              ) : null}
             </li>
           ))}
         </ul>

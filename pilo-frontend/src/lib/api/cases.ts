@@ -1,6 +1,6 @@
 import { getApiUrl } from "@/lib/api/config";
 import { authFetch, readApiError } from "@/lib/api/client";
-import type { CaseDetail, CaseSummary } from "@/lib/api/types";
+import type { CaseDetail, CaseSummary, PendingReviewCase } from "@/lib/api/types";
 
 export async function createCase(procedureTypeId: string): Promise<CaseDetail> {
   const response = await authFetch(`${getApiUrl()}/api/v1/cases`, {
@@ -24,6 +24,18 @@ export async function listMyCases(): Promise<CaseSummary[]> {
   }
 
   return (await response.json()) as CaseSummary[];
+}
+
+export async function listPendingReviewCases(): Promise<PendingReviewCase[]> {
+  const response = await authFetch(`${getApiUrl()}/api/v1/cases/pending-review`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    await readApiError(response);
+  }
+
+  return (await response.json()) as PendingReviewCase[];
 }
 
 export async function getCaseDetail(caseId: string): Promise<CaseDetail> {

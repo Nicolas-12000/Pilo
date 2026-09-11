@@ -10,6 +10,7 @@ export function useNavItems() {
 
   return navItems
     .filter((item) => !item.requiresAdmin || user?.role === "ADMIN")
+    .filter((item) => !item.requiresReviewer || user?.role === "REVIEWER" || user?.role === "ADMIN")
     .map((item) => {
       if (item.requiresAuth && status !== "authenticated") {
         return { ...item, href: routes.loginNext(item.href) };

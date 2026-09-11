@@ -5,6 +5,7 @@ export const routes = {
   procedure: (id: string) => `/procedures/${id}`,
   myCases: "/my-cases",
   profile: "/profile",
+  review: "/review",
   case: (id: string) => `/cases/${id}`,
   adminProcedures: "/admin/procedures",
   adminProcedureNew: "/admin/procedures/new",

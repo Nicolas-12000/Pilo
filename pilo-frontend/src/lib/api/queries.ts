@@ -6,6 +6,7 @@ import type { CaseDetail, DocumentRecord, Workflow } from "@/lib/api/types";
 export const caseKeys = {
   all: ["cases"] as const,
   list: () => [...caseKeys.all, "list"] as const,
+  pendingReview: () => [...caseKeys.all, "pending-review"] as const,
   bundle: (caseId: string) => [...caseKeys.all, "bundle", caseId] as const,
 };
 

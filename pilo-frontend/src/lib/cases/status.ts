@@ -73,6 +73,7 @@ export const auditActionLabels: Record<string, string> = {
   DOCUMENT_VALIDATED: "Documento validado",
   DOCUMENT_REJECTED: "Documento rechazado",
   DOCUMENT_PROCESSING_FAILED: "Error al procesar el documento",
+  CASE_REVIEWED: "Revisión final completada",
 };
 
 export function auditActionLabel(action: string) {

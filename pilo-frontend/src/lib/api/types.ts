@@ -89,6 +89,11 @@ export type CaseSummary = {
   createdAt: string;
 };
 
+export type PendingReviewCase = CaseSummary & {
+  applicantFullName: string;
+  applicantEmail: string;
+};
+
 export type CaseRequirementStatus = {
   id: string;
   code: string;
@@ -113,6 +118,13 @@ export type CaseDetail = CaseSummary & {
   recentAuditEvents: AuditEvent[];
 };
 
+export type DocumentExtraction = {
+  documentTypeDetected: string;
+  confidence: number;
+  fields: Record<string, string>;
+  processedAt: string;
+};
+
 export type DocumentRecord = {
   id: string;
   requirementId: string;
@@ -121,6 +133,9 @@ export type DocumentRecord = {
   mimeType: string;
   fileSize: number;
   status: DocumentStatus;
+  extraction: DocumentExtraction | null;
+  validationFailures: string[];
+  processingFailureReason: string | null;
 };
 
 export type WorkflowTask = {
@@ -141,4 +156,6 @@ export type ExternalReference = {
   sourceName: string;
   externalId: string;
   title: string;
+  url: string | null;
+  snippet: string | null;
 };
