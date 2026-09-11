@@ -25,4 +25,9 @@ public class IntegrationController {
 	public List<ExternalReferenceResponse> searchDatos(@RequestParam String query) {
 		return integrationService.searchDatos(query);
 	}
+
+	@GetMapping("/sia/search")
+	public List<ExternalReferenceResponse> searchSia(@RequestParam String query) {
+		return integrationService.searchSia(query);
+	}
 }

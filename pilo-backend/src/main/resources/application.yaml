@@ -64,6 +64,9 @@ pilo:
     min-confidence: 0.5
   internal:
     api-key: ${PILO_INTERNAL_API_KEY:dev-internal-key}
+  integrations:
+    demo-fallback-enabled: ${PILO_INTEGRATIONS_DEMO_FALLBACK:true}
+    timeout: ${PILO_INTEGRATIONS_TIMEOUT:4s}
 
 ---
 spring:
