@@ -33,7 +33,6 @@ public class CaseService {
 	private final WorkflowInitializer workflowInitializer;
 	private final WorkflowService workflowService;
 	private final AuditService auditService;
-	private final com.pilo.audit.AuditEventRepository auditEventRepository;
 
 	public CaseService(
 			ProcedureCaseRepository procedureCaseRepository,
@@ -44,8 +43,7 @@ public class CaseService {
 			CaseAccessService caseAccessService,
 			WorkflowInitializer workflowInitializer,
 			WorkflowService workflowService,
-			AuditService auditService,
-			com.pilo.audit.AuditEventRepository auditEventRepository) {
+			AuditService auditService) {
 		this.procedureCaseRepository = procedureCaseRepository;
 		this.procedureTypeRepository = procedureTypeRepository;
 		this.userRepository = userRepository;
@@ -55,7 +53,6 @@ public class CaseService {
 		this.workflowInitializer = workflowInitializer;
 		this.workflowService = workflowService;
 		this.auditService = auditService;
-		this.auditEventRepository = auditEventRepository;
 	}
 
 	@Transactional
@@ -96,6 +93,16 @@ public class CaseService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<PendingReviewCaseResponse> listPendingReview(Role role) {
+		if (role != Role.REVIEWER && role != Role.ADMIN) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+		}
+		return procedureCaseRepository.findPendingReview().stream()
+				.map(PendingReviewCaseResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
 	public CaseDetailResponse getCaseDetail(UUID caseId, UUID userId, Role role) {
 		ProcedureCase procedureCase = caseAccessService.requireAccessibleCase(caseId, userId, role);
 		List<Document> documents = documentRepository.findByCaseId(caseId);
@@ -108,10 +115,8 @@ public class CaseService {
 						requirement.isMandatory(),
 						resolveFulfillment(requirement.getId(), documents)))
 				.toList();
-		List<AuditEventResponse> auditEvents = auditEventRepository.findByResourcePrefix("case:" + caseId).stream()
-				.limit(10)
-				.map(AuditEventResponse::from)
-				.toList();
+		List<UUID> documentIds = documents.stream().map(Document::getId).toList();
+		List<AuditEventResponse> auditEvents = auditService.getCaseTimeline(caseId, documentIds);
 
 		return new CaseDetailResponse(
 				procedureCase.getId(),

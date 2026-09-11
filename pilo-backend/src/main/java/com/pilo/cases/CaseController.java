@@ -4,6 +4,7 @@ import com.pilo.common.AuthSupport;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,12 @@ public class CaseController {
 	@GetMapping
 	public List<CaseSummaryResponse> listMine(Authentication authentication) {
 		return caseService.listMyCases(AuthSupport.userId(authentication));
+	}
+
+	@GetMapping("/pending-review")
+	@PreAuthorize("hasAnyRole('REVIEWER', 'ADMIN')")
+	public List<PendingReviewCaseResponse> listPendingReview(Authentication authentication) {
+		return caseService.listPendingReview(AuthSupport.role(authentication));
 	}
 
 	@GetMapping("/{id}")

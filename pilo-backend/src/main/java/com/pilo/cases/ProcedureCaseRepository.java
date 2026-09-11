@@ -26,6 +26,18 @@ public interface ProcedureCaseRepository extends JpaRepository<ProcedureCase, UU
 			""")
 	Optional<ProcedureCase> findDetailedById(@Param("id") UUID id);
 
+	@Query("""
+			SELECT DISTINCT pc FROM ProcedureCase pc
+			JOIN FETCH pc.procedureType
+			JOIN FETCH pc.user
+			JOIN WorkflowTask wt ON wt.procedureCase = pc
+			WHERE pc.status = 'UNDER_REVIEW'
+			  AND wt.taskCode = 'FINAL_REVIEW'
+			  AND wt.status = 'IN_PROGRESS'
+			ORDER BY pc.createdAt ASC
+			""")
+	List<ProcedureCase> findPendingReview();
+
 	Optional<ProcedureCase> findByCaseNumber(String caseNumber);
 
 	boolean existsByProcedureTypeId(UUID procedureTypeId);
