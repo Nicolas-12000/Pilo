@@ -9,6 +9,11 @@ import tools.jackson.databind.JsonNode;
 public class FutureExpirationRule implements DocumentRule {
 
 	@Override
+	public String code() {
+		return "FUTURE_EXPIRATION";
+	}
+
+	@Override
 	public boolean evaluate(StructuredExtraction extraction, JsonNode extractedFields, ValidationRules rules) {
 		if (!rules.requireFutureExpiration()) {
 			return true;

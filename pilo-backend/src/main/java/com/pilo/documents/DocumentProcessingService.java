@@ -109,16 +109,23 @@ public class DocumentProcessingService {
 		stored.setExtractedData(extraction.extractedFieldsJson());
 		documentExtractionRepository.save(stored);
 
-		boolean valid = documentValidationService.isValid(extraction, document.getRequirement());
-		document.setStatus(valid ? DocumentStatus.VALIDATED : DocumentStatus.REJECTED);
+		var validation = documentValidationService.validate(extraction, document.getRequirement());
+		document.setStatus(validation.valid() ? DocumentStatus.VALIDATED : DocumentStatus.REJECTED);
 		documentRepository.save(document);
+
+		Map<String, Object> metadata = new java.util.HashMap<>();
+		metadata.put("documentType", extraction.documentType());
+		metadata.put("confidence", extraction.confidence());
+		if (!validation.valid()) {
+			metadata.put("failures", validation.failures());
+		}
 
 		auditService.record(
 				document.getProcedureCase().getUser(),
-				valid ? "DOCUMENT_VALIDATED" : "DOCUMENT_REJECTED",
+				validation.valid() ? "DOCUMENT_VALIDATED" : "DOCUMENT_REJECTED",
 				"document:" + document.getId(),
-				valid ? "SUCCESS" : "FAILURE",
-				Map.of("documentType", extraction.documentType(), "confidence", extraction.confidence()));
+				validation.valid() ? "SUCCESS" : "FAILURE",
+				metadata);
 
 		workflowService.reevaluate(document.getProcedureCase().getId());
 	}

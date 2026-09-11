@@ -8,6 +8,11 @@ import tools.jackson.databind.JsonNode;
 public class ExpectedDocumentTypeRule implements DocumentRule {
 
 	@Override
+	public String code() {
+		return "EXPECTED_DOCUMENT_TYPE";
+	}
+
+	@Override
 	public boolean evaluate(StructuredExtraction extraction, JsonNode extractedFields, ValidationRules rules) {
 		if (rules.expectedDocumentType() == null || rules.expectedDocumentType().isBlank()) {
 			return true;

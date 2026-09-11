@@ -15,6 +15,11 @@ public class ConfidenceRule implements DocumentRule {
 	}
 
 	@Override
+	public String code() {
+		return "CONFIDENCE";
+	}
+
+	@Override
 	public boolean evaluate(StructuredExtraction extraction, JsonNode extractedFields, ValidationRules rules) {
 		double threshold = rules.minConfidence() != null ? rules.minConfidence() : aiProperties.minConfidence();
 		return extraction.confidence() >= threshold;

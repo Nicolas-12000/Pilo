@@ -5,5 +5,7 @@ import tools.jackson.databind.JsonNode;
 
 public interface DocumentRule {
 
+	String code();
+
 	boolean evaluate(StructuredExtraction extraction, JsonNode extractedFields, ValidationRules rules);
 }

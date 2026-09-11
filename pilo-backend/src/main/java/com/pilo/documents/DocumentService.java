@@ -31,6 +31,7 @@ public class DocumentService {
 	private final DocumentProcessingJob documentProcessingJob;
 	private final ProcessingProperties processingProperties;
 	private final AuditService auditService;
+	private final DocumentPresentationService documentPresentationService;
 
 	public DocumentService(
 			DocumentRepository documentRepository,
@@ -39,7 +40,8 @@ public class DocumentService {
 			ObjectStorage objectStorage,
 			DocumentProcessingJob documentProcessingJob,
 			ProcessingProperties processingProperties,
-			AuditService auditService) {
+			AuditService auditService,
+			DocumentPresentationService documentPresentationService) {
 		this.documentRepository = documentRepository;
 		this.requirementRepository = requirementRepository;
 		this.caseAccessService = caseAccessService;
@@ -47,6 +49,7 @@ public class DocumentService {
 		this.documentProcessingJob = documentProcessingJob;
 		this.processingProperties = processingProperties;
 		this.auditService = auditService;
+		this.documentPresentationService = documentPresentationService;
 	}
 
 	@Transactional
@@ -137,9 +140,7 @@ public class DocumentService {
 	@Transactional(readOnly = true)
 	public List<DocumentResponse> list(UUID caseId, UUID userId, Role role) {
 		caseAccessService.requireAccessibleCase(caseId, userId, role);
-		return documentRepository.findByCaseId(caseId).stream()
-				.map(DocumentResponse::from)
-				.toList();
+		return documentPresentationService.present(documentRepository.findByCaseId(caseId));
 	}
 
 	private RequirementContext validateRequirement(UUID caseId, UUID userId, Role role, UUID requirementId) {

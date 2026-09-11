@@ -43,12 +43,13 @@ class DocumentValidationServiceTest {
 	}
 
 	@Test
-	void rejectsUnexpectedDocumentType() {
-		boolean valid = documentValidationService.isValid(
+	void rejectsUnexpectedDocumentTypeWithFailureCode() {
+		var result = documentValidationService.validate(
 				new StructuredExtraction("identity_document", 0.9, "{}"),
 				requirement("{\"expectedDocumentType\":\"rental_contract\"}"));
 
-		assertThat(valid).isFalse();
+		assertThat(result.valid()).isFalse();
+		assertThat(result.failures()).containsExactly("EXPECTED_DOCUMENT_TYPE");
 	}
 
 	@Test
