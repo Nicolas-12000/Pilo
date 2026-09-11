@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
-@RequestMapping("/internal/documents")
+@RequestMapping("/internal/documents/{documentId}")
 public class InternalDocumentController {
 
 	private final DocumentRepository documentRepository;
@@ -36,7 +36,7 @@ public class InternalDocumentController {
 		this.storageProperties = storageProperties;
 	}
 
-	@PostMapping("/{documentId}/upload-completed")
+	@PostMapping("/upload-completed")
 	@Transactional
 	public void uploadCompleted(@PathVariable UUID documentId) {
 		Document document = documentRepository.findForProcessing(documentId).orElseThrow();
@@ -47,14 +47,14 @@ public class InternalDocumentController {
 		documentRepository.save(document);
 	}
 
-	@PostMapping("/{documentId}/processing-started")
+	@PostMapping("/processing-started")
 	@Transactional
 	public ProcessingContextResponse processingStarted(@PathVariable UUID documentId) {
 		var context = documentProcessingService.markProcessing(documentId);
 		return ProcessingContextResponse.from(context, storageProperties);
 	}
 
-	@GetMapping("/{documentId}/processing-context")
+	@GetMapping("/processing-context")
 	@Transactional(readOnly = true)
 	public ProcessingContextResponse processingContext(@PathVariable UUID documentId) {
 		Document document = documentRepository.findForProcessing(documentId).orElseThrow();
