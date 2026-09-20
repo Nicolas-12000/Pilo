@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
@@ -29,35 +28,49 @@ def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     )
     s3 = boto3.client("s3")
     processed = 0
+    failed = 0
 
     for record in event.get("Records", []):
-        bucket = record["s3"]["bucket"]["name"]
-        key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
-        document_id = _parse_document_id(key)
-        LOGGER.info("Processing s3://%s/%s for document %s", bucket, key, document_id)
+        try:
+            _process_record(backend, s3, record)
+            processed += 1
+        except Exception:
+            failed += 1
+            LOGGER.exception("Failed to process S3 record")
 
-        backend.upload_completed(document_id)
-        context = backend.processing_started(document_id)
-
-        obj = s3.get_object(Bucket=bucket, Key=key)
-        content = obj["Body"].read()
-        mime_type = obj.get("ContentType") or context.get("mimeType") or "application/octet-stream"
-
-        result = extract(
-            content,
-            mime_type,
-            context.get("requirementCode", ""),
-            context.get("expectedDocumentType", ""),
-        )
-        backend.submit_extraction(
-            document_id,
-            result["documentType"],
-            float(result["confidence"]),
-            result["extractedFields"],
-        )
-        processed += 1
-
+    if failed:
+        raise RuntimeError(f"Failed {failed} of {processed + failed} records")
     return {"processed": processed}
+
+
+def _process_record(backend: BackendClient, s3: Any, record: dict[str, Any]) -> None:
+    bucket = record["s3"]["bucket"]["name"]
+    key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
+    document_id = _parse_document_id(key)
+    LOGGER.info("Processing s3://%s/%s for document %s", bucket, key, document_id)
+
+    backend.upload_completed(document_id)
+    context = backend.processing_started(document_id)
+    if context.get("alreadyComplete"):
+        LOGGER.info("Document %s already complete; skipping extract", document_id)
+        return
+
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    content = obj["Body"].read()
+    mime_type = obj.get("ContentType") or context.get("mimeType") or "application/octet-stream"
+
+    result = extract(
+        content,
+        mime_type,
+        context.get("requirementCode", ""),
+        context.get("expectedDocumentType", ""),
+    )
+    backend.submit_extraction(
+        document_id,
+        result["documentType"],
+        float(result["confidence"]),
+        result["extractedFields"],
+    )
 
 
 def _parse_document_id(storage_key: str) -> str:

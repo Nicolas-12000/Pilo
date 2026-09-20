@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -49,14 +50,32 @@ public class Document {
 	@Column(nullable = false, length = 32)
 	private DocumentStatus status;
 
+	@Column(name = "processing_attempts", nullable = false)
+	private int processingAttempts;
+
+	@Column(name = "last_error", length = 512)
+	private String lastError;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
+	@Column(name = "updated_at", nullable = false)
+	private Instant updatedAt;
+
 	@PrePersist
 	void onCreate() {
+		Instant now = Instant.now();
 		if (createdAt == null) {
-			createdAt = Instant.now();
+			createdAt = now;
 		}
+		if (updatedAt == null) {
+			updatedAt = now;
+		}
+	}
+
+	@PreUpdate
+	void onUpdate() {
+		updatedAt = Instant.now();
 	}
 
 	public UUID getId() {
@@ -119,7 +138,27 @@ public class Document {
 		this.status = status;
 	}
 
+	public int getProcessingAttempts() {
+		return processingAttempts;
+	}
+
+	public void setProcessingAttempts(int processingAttempts) {
+		this.processingAttempts = processingAttempts;
+	}
+
+	public String getLastError() {
+		return lastError;
+	}
+
+	public void setLastError(String lastError) {
+		this.lastError = lastError;
+	}
+
 	public Instant getCreatedAt() {
 		return createdAt;
+	}
+
+	public Instant getUpdatedAt() {
+		return updatedAt;
 	}
 }

@@ -7,14 +7,12 @@ import com.pilo.documents.DocumentStatus;
 import com.pilo.documents.StorageProperties;
 import com.pilo.documents.validation.ValidationRulesParser;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/internal/documents/{documentId}")
@@ -40,11 +38,10 @@ public class InternalDocumentController {
 	@Transactional
 	public void uploadCompleted(@PathVariable UUID documentId) {
 		Document document = documentRepository.findForProcessing(documentId).orElseThrow();
-		if (document.getStatus() != DocumentStatus.PENDING_UPLOAD) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "INVALID_DOCUMENT_STATUS");
+		if (document.getStatus() == DocumentStatus.PENDING_UPLOAD) {
+			document.setStatus(DocumentStatus.UPLOADED);
+			documentRepository.save(document);
 		}
-		document.setStatus(DocumentStatus.UPLOADED);
-		documentRepository.save(document);
 	}
 
 	@PostMapping("/processing-started")
@@ -67,7 +64,9 @@ public class InternalDocumentController {
 				storageProperties.provider(),
 				document.getMimeType(),
 				document.getRequirement().getCode(),
-				rules.expectedDocumentType());
+				rules.expectedDocumentType(),
+				document.getStatus() == DocumentStatus.VALIDATED
+						|| document.getStatus() == DocumentStatus.REJECTED);
 	}
 
 	public record ProcessingContextResponse(
@@ -78,7 +77,8 @@ public class InternalDocumentController {
 			String storageProvider,
 			String mimeType,
 			String requirementCode,
-			String expectedDocumentType) {
+			String expectedDocumentType,
+			boolean alreadyComplete) {
 
 		static ProcessingContextResponse from(
 				DocumentProcessingService.ProcessingContext context, StorageProperties storageProperties) {
@@ -90,7 +90,8 @@ public class InternalDocumentController {
 					storageProperties.provider(),
 					context.mimeType(),
 					context.requirementCode(),
-					context.expectedDocumentType());
+					context.expectedDocumentType(),
+					context.alreadyComplete());
 		}
 	}
 }

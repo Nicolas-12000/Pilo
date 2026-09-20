@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface DocumentExtractionRepository extends JpaRepository<DocumentExtraction, UUID> {
 
+	boolean existsByDocument_Id(UUID documentId);
+
 	@Query("""
 			SELECT de FROM DocumentExtraction de
 			JOIN FETCH de.document

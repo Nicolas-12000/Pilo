@@ -8,13 +8,23 @@ import com.pilo.documents.storage.ObjectStorage;
 import com.pilo.documents.validation.ValidationRulesParser;
 import com.pilo.workflows.WorkflowService;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DocumentProcessingService {
+
+	static final int MAX_ATTEMPTS = 5;
+	private static final int INLINE_RETRIES = 3;
+	private static final Set<DocumentStatus> STARTABLE =
+			EnumSet.of(DocumentStatus.PENDING_UPLOAD, DocumentStatus.UPLOADED, DocumentStatus.PROCESSING_FAILED);
+	private static final Set<DocumentStatus> TERMINAL =
+			EnumSet.of(DocumentStatus.VALIDATED, DocumentStatus.REJECTED);
 
 	private final DocumentRepository documentRepository;
 	private final DocumentExtractionRepository documentExtractionRepository;
@@ -45,13 +55,23 @@ public class DocumentProcessingService {
 	}
 
 	public void process(UUID documentId) {
-		ProcessingContext context = markProcessing(documentId);
-		try {
-			StructuredExtraction extraction = extract(context);
-			applyExtraction(documentId, extraction);
-		} catch (Exception exception) {
-			markFailed(documentId, exception.getMessage());
+		Exception lastFailure = null;
+		for (int attempt = 1; attempt <= INLINE_RETRIES; attempt++) {
+			try {
+				ProcessingContext context = markProcessing(documentId);
+				if (context.alreadyComplete()) {
+					return;
+				}
+				StructuredExtraction extraction = extract(context);
+				applyExtraction(documentId, extraction);
+				return;
+			} catch (IllegalStateException notReady) {
+				return;
+			} catch (Exception exception) {
+				lastFailure = exception;
+			}
 		}
+		markFailed(documentId, lastFailure == null ? "unknown" : lastFailure.getMessage());
 	}
 
 	private StructuredExtraction extract(ProcessingContext context) throws IOException {
@@ -67,24 +87,32 @@ public class DocumentProcessingService {
 	@Transactional
 	public ProcessingContext markProcessing(UUID documentId) {
 		Document document = documentRepository.findForProcessing(documentId).orElseThrow();
-		if (document.getStatus() != DocumentStatus.UPLOADED && document.getStatus() != DocumentStatus.PENDING_UPLOAD) {
+		if (TERMINAL.contains(document.getStatus())
+				|| (document.getStatus() == DocumentStatus.PROCESSING_FAILED
+						&& document.getProcessingAttempts() >= MAX_ATTEMPTS)) {
+			return toContext(document, true);
+		}
+		if (document.getStatus() == DocumentStatus.PROCESSING) {
+			return toContext(document, false);
+		}
+		if (!STARTABLE.contains(document.getStatus())) {
 			throw new IllegalStateException("DOCUMENT_NOT_READY_FOR_PROCESSING");
 		}
 		document.setStatus(DocumentStatus.PROCESSING);
+		document.setProcessingAttempts(document.getProcessingAttempts() + 1);
+		document.setLastError(null);
 		documentRepository.save(document);
-		return new ProcessingContext(
-				document.getId(),
-				document.getProcedureCase().getId(),
-				document.getStorageKey(),
-				document.getMimeType(),
-				document.getRequirement().getCode(),
-				validationRulesParser.parse(document.getRequirement().getValidationRules()).expectedDocumentType());
+		return toContext(document, false);
 	}
 
 	@Transactional
 	public void markFailed(UUID documentId, String reason) {
 		Document document = documentRepository.findForProcessing(documentId).orElseThrow();
+		if (TERMINAL.contains(document.getStatus())) {
+			return;
+		}
 		document.setStatus(DocumentStatus.PROCESSING_FAILED);
+		document.setLastError(truncate(reason));
 		documentRepository.save(document);
 		auditService.record(
 				document.getProcedureCase().getUser(),
@@ -102,15 +130,25 @@ public class DocumentProcessingService {
 
 	@Transactional
 	public void applyExtraction(Document document, StructuredExtraction extraction) {
-		DocumentExtraction stored = new DocumentExtraction();
-		stored.setDocument(document);
-		stored.setDocumentTypeDetected(extraction.documentType());
-		stored.setConfidence(extraction.confidence());
-		stored.setExtractedData(extraction.extractedFieldsJson());
-		documentExtractionRepository.save(stored);
+		if (TERMINAL.contains(document.getStatus())
+				|| documentExtractionRepository.existsByDocument_Id(document.getId())) {
+			return;
+		}
+
+		try {
+			DocumentExtraction stored = new DocumentExtraction();
+			stored.setDocument(document);
+			stored.setDocumentTypeDetected(extraction.documentType());
+			stored.setConfidence(extraction.confidence());
+			stored.setExtractedData(extraction.extractedFieldsJson());
+			documentExtractionRepository.save(stored);
+		} catch (DataIntegrityViolationException duplicate) {
+			return;
+		}
 
 		var validation = documentValidationService.validate(extraction, document.getRequirement());
 		document.setStatus(validation.valid() ? DocumentStatus.VALIDATED : DocumentStatus.REJECTED);
+		document.setLastError(null);
 		documentRepository.save(document);
 
 		Map<String, Object> metadata = new java.util.HashMap<>();
@@ -130,11 +168,30 @@ public class DocumentProcessingService {
 		workflowService.reevaluate(document.getProcedureCase().getId());
 	}
 
+	private ProcessingContext toContext(Document document, boolean alreadyComplete) {
+		return new ProcessingContext(
+				document.getId(),
+				document.getProcedureCase().getId(),
+				document.getStorageKey(),
+				document.getMimeType(),
+				document.getRequirement().getCode(),
+				validationRulesParser.parse(document.getRequirement().getValidationRules()).expectedDocumentType(),
+				alreadyComplete);
+	}
+
+	private static String truncate(String reason) {
+		if (reason == null) {
+			return "unknown";
+		}
+		return reason.length() <= 512 ? reason : reason.substring(0, 512);
+	}
+
 	public record ProcessingContext(
 			UUID documentId,
 			UUID caseId,
 			String storageKey,
 			String mimeType,
 			String requirementCode,
-			String expectedDocumentType) {}
+			String expectedDocumentType,
+			boolean alreadyComplete) {}
 }
