@@ -29,6 +29,7 @@ La inteligencia artificial se utiliza para el procesamiento de documentos: clasi
 - [Testing](#testing)
 - [Setup local](#setup-local)
 - [Demo](#demo)
+- [Evidencia (capturas)](#evidencia-capturas)
 - [Convenciones](#convenciones)
 
 ---
@@ -681,15 +682,16 @@ GitHub Actions
 
 ## Testing
 
+Detalle y cómo correrlos: [`docs/testing.md`](docs/testing.md).
+
 ### Backend
 
 ```bash
 cd pilo-backend && ./mvnw test
 ```
 
-- **Unit tests**: validadores, workflow transitions, cálculo de deadlines, reglas de autorización.
-- **Integration tests**: Testcontainers con PostgreSQL. No leen `.env` ni tocan la BD local.
-- **AI tests**: validación de schema, campos obligatorios, manejo de respuestas inválidas, confidence thresholds.
+- **Unitarias**: JWT, reglas de documento, parsers de BOE/datos.gob.es.
+- **Integración**: Testcontainers + PostgreSQL (hace falta Docker).
 
 ### Frontend
 
@@ -697,7 +699,9 @@ cd pilo-backend && ./mvnw test
 cd pilo-frontend && pnpm test
 ```
 
-- Vitest + Testing Library + jsdom.
+Vitest + Testing Library.
+
+No hay E2E todavía. El checklist de capturas de la demo está en [`docs/evidence/`](docs/evidence/README.md).
 
 ---
 
@@ -783,7 +787,7 @@ Asegúrate de que `PILO_CORS_ORIGINS` incluya el puerto del frontend (`3000` y/o
 
 1. Login con `reviewer@pilo.test`.
 2. Ir a **Revisión** (`/review`) y abrir un expediente *En revisión*.
-3. Revisar documentos y pulsar **Aprobar expediente** o **Rechazar**.
+3. Abrir el documento (vista previa), contrastar con la extracción IA y **Aprobar** o **Rechazar** el expediente.
 
 ### Flujo admin (ADMIN)
 
@@ -791,7 +795,13 @@ Asegúrate de que `PILO_CORS_ORIGINS` incluya el puerto del frontend (`3000` y/o
 2. **Administración** → editar catálogo y reglas de validación.
 3. Puede ejecutar también el flujo de revisor.
 
-Guía ampliada paso a paso: [`pilo.md`](pilo.md).
+Guía operativa AWS (cuándo despliegues): [`docs/aws-operations.md`](docs/aws-operations.md).
+
+---
+
+## Evidencia (capturas)
+
+Cuando existan, van en [`docs/evidence/`](docs/evidence/README.md) (catálogo, extracción IA, preview del revisor, BOE en vivo, resolución). Hoy la carpeta es el checklist; no hay PNG todavía.
 
 ---
 
