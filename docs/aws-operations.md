@@ -43,6 +43,7 @@ Ciudadano / Revisor
 ### Qué no crear (ahí se va el dinero)
 
 - NAT Gateway (varios USD/día).
+- **API Gateway, ALB, Cognito.** El “gateway” de la demo es Amplify (rewrite `/api`) + nginx en el EC2. Spring ya hace JWT y CORS.
 - ALB + ECS Fargate “porque queda bonito”.
 - Segundo EC2 para el frontend.
 - RDS público + EC2 en otra región.
