@@ -1,12 +1,22 @@
 import type { NextConfig } from "next";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const explicitApiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 const isDev = process.env.NODE_ENV !== "production";
+const apiConnect = explicitApiUrl || (isDev ? "http://localhost:8080" : "");
 
 // Turbopack/webpack dev mode needs 'unsafe-eval' (source maps, HMR) and a websocket connection
 // for live reload. Neither is present in a production build, so both are dev-only.
 const scriptSrc = isDev ? "'self' 'unsafe-inline' 'unsafe-eval'" : "'self' 'unsafe-inline'";
-const connectSrc = isDev ? `'self' ${apiUrl} ws:` : `'self' ${apiUrl}`;
+const connectSrc = [
+  "'self'",
+  apiConnect,
+  isDev ? "ws:" : "",
+  // Presigned PUT/GET go straight to the documents bucket, not to Amplify.
+  "https://*.amazonaws.com",
+  "https://s3.*.amazonaws.com",
+]
+  .filter(Boolean)
+  .join(" ");
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },

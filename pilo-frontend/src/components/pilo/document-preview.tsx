@@ -88,7 +88,7 @@ export function DocumentPreviewDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--pilo-overlay)] p-md"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-(--pilo-overlay) p-md"
       role="presentation"
       onClick={onClose}
     >

@@ -13,10 +13,10 @@ Objetivo del producto (enunciado): reducir el trabajo manual de organizar y revi
 Ciudadano / Revisor
         │
         ▼
-┌──────────────────────┐     HTTPS      ┌─────────────────────────────┐
-│ Frontend Next.js     │ ──────────────►│ EC2 t4g.micro (VPC pública) │
-│ Amplify Hosting      │                │ Solo Spring Boot (API)      │
-│ (CloudFront + SSR)   │                └──────────┬────────┬─────────┘
+┌──────────────────────┐     /api rewrite     ┌─────────────────────────────┐
+│ Amplify Hosting      │ ───────────────────► │ EC2 + Elastic IP :8080      │
+│ Next.js (la web)     │                      │ Solo Spring Boot            │
+│ https://*.amplifyapp │                      └──────────┬────────┬─────────┘
 └──────────────────────┘                           │        │
                                                    │        │ SG :5432
                       PUT presigned                │        ▼
@@ -296,6 +296,16 @@ Usá **un solo t4g.micro** (ARM, 1 GB). El JAR del repo ya arranca con heap limi
 - Docker o `java -jar` del backend.
 - Nada más: **ni PostgreSQL local** (va en RDS), **ni Next.js**, **ni archivos de usuarios**.
 
+### IP estable (Elastic IP) — obligatorio
+
+Si el EC2 se para y arranca, **la IP pública cambia**. El front no puede depender de `ec2-12-34.compute.amazonaws.com`.
+
+1. EC2 → **Elastic IPs** → Allocate (VPC).
+2. Associate a tu instancia.
+3. Anotá `ELASTIC_IP` (ej. `18.203.x.x`). Esa es la dirección del API para Amplify.
+
+Mientras la EIP esté asociada a la instancia, **no cambia**. Si tirás la VM y creás otra, reasociás la misma EIP: el front no se toca.
+
 ### Aprovisionar (resumen)
 
 ```bash
@@ -317,7 +327,7 @@ SPRING_DATASOURCE_MIN_IDLE=1
 SERVER_TOMCAT_MAX_THREADS=20
 PILO_JWT_SECRET=...          # 32+ bytes
 PILO_INTERNAL_API_KEY=...
-PILO_CORS_ORIGINS=https://TU-FRONTEND
+PILO_CORS_ORIGINS=https://TU-APP.amplifyapp.com
 PILO_STORAGE_PROVIDER=s3
 PILO_S3_BUCKET=pilo-docs-dev
 AWS_REGION=eu-west-1
@@ -361,24 +371,39 @@ Apagá la instancia (`stop`, no terminate) cuando no demos. RDS igual.
 
 ---
 
-## Paso 7 — Frontend en Amplify Hosting (toda la arquitectura en AWS)
+## Paso 7 — Frontend en Amplify (no es un S3 vuestro)
 
-Sí: el front **debe estar en AWS** para la defensa. La pieza correcta es **Amplify Hosting**, no el EC2 y no el S3 de PDFs.
+Hay **dos “S3” distintos**. Mezclarlos es lo que genera el lío de la IP:
 
-| Dónde | ¿Para el front? | Motivo |
-|-------|-----------------|--------|
-| **Amplify Hosting** | **Sí — esta es la arquitectura** | Servicio AWS para Next.js. HTTPS, CDN (CloudFront) y build gestionados. Free tier de Amplify cubre una demo. |
-| Mismo EC2 que Spring | No | 1 GB RAM: Java se muere si levantás `next start`. |
-| S3 `pilo-docs` | No | Bucket **privado** de expedientes. No es hosting web. |
-| S3 público + CloudFront “estático” | No hoy | Haría falta `output: 'export'` y pregenerar `/cases/[id]`. Next de PILO es dinámico. |
-| Vercel | Solo plan B | Funciona, pero ya no es “todo AWS”. |
+| Recurso | Qué es | ¿El navegador le pega al EC2? |
+|---------|--------|-------------------------------|
+| **Amplify Hosting** (`https://xxxx.amplifyapp.com`) | La **web** (Next.js). AWS pone CloudFront detrás. Vos no creás este bucket. | No. El usuario entra aquí. |
+| **S3 `pilo-docs`** | Los **PDFs**. Privado. Presigned PUT. | No. El navegador sube el archivo **directo a S3** con URL firmada. |
+
+El EC2 **nunca sirve el HTML**. Solo Spring (`/api/v1/...`).
+
+### Cómo evita el front quedarse con una IP muerta
+
+El navegador **no llama a `http://18.203.x.x:8080`**. Llama a la misma URL de Amplify y Amplify **reenvía** `/api/*` al Elastic IP:
+
+```
+Navegador
+   │
+   │  1. https://xxxx.amplifyapp.com/login          → HTML/JS (Amplify)
+   │  2. https://xxxx.amplifyapp.com/api/v1/auth/login
+   │        rewrite 200 ───────────────────────────► EC2 Elastic IP:8080
+   │  3. https://pilo-docs.s3.amazonaws.com/cases/…  → PDF (presigned, no es el front)
+```
+
+Si el EC2 se cae y levantás **otra** instancia con **la misma Elastic IP**, Amplify sigue igual: no rebuild, no cambia `NEXT_PUBLIC_API_URL`.
+
+HTTPS de Amplify + HTTP en el micro no rompe el navegador: el browser solo ve `https://….amplifyapp.com`.
 
 ### 7.1 Crear la app
 
-1. [Amplify Console](https://console.aws.amazon.com/amplify/) → **Create new app** → **GitHub** (o subir zip de `pilo-frontend` si no querés conectar el repo).
-2. App name: `pilo-web`
-3. Root / monorepo: carpeta **`pilo-frontend`**
-4. Build settings (Amplify detecta Next; si no, usá esto):
+1. [Amplify Console](https://console.aws.amazon.com/amplify/) → **Create new app** → GitHub (root **`pilo-frontend`**).
+2. Framework: **Next.js — SSR** (no “Static HTML”).
+3. Build (si no lo detecta):
 
 ```yaml
 version: 1
@@ -401,34 +426,42 @@ frontend:
       - .next/cache/**/*
 ```
 
-Framework: **Next.js — SSR** (no “Static HTML”).
+**No pongas `NEXT_PUBLIC_API_URL` en Amplify.** En producción el cliente usa rutas relativas `/api/v1/...`.
 
-### 7.2 Variables
+### 7.2 Rewrite hacia el Elastic IP (esto SÍ se actualiza si cambia la IP)
 
-En Amplify → Environment variables:
+Amplify → **Hosting → Rewrites and redirects** → abrir el editor JSON y **añadir al principio** (antes de las reglas de Next):
 
-```bash
-NEXT_PUBLIC_API_URL=http://EC2_PUBLIC_DNS:8080
+```json
+[
+  {
+    "source": "/api/<*>",
+    "status": "200",
+    "target": "http://ELASTIC_IP:8080/api/<*>"
+  }
+]
 ```
 
-Cuando tengas dominio o nginx+TLS en el EC2, cambialo a `https://api.tudominio.com` y **redesplegá** (esa variable se incrusta en el build).
+`status: 200` = proxy, no redirect. El usuario no ve la IP del EC2.
 
-En el backend:
+Si algún día reasociás la EIP a otra VM, este `target` es **el único sitio** que tocarías (y solo si cambiaste de IP; con Elastic IP no hace falta).
+
+### 7.3 CORS
+
+Aunque el browser hable con Amplify, Spring recibe `Origin: https://xxxx.amplifyapp.com`:
 
 ```bash
 PILO_CORS_ORIGINS=https://TU-APP.amplifyapp.com
 ```
 
-CORS del bucket `pilo-docs`: el mismo origen Amplify (paso 3).
+Bucket `pilo-docs` → el mismo origen (paso 3). SG del EC2: **8080** abierto al menos a internet (Amplify proxya desde IPs de AWS, no desde el PC del alumno).
 
-### 7.3 Comprobar
+### 7.4 Comprobar
 
-- [ ] `https://xxxxx.amplifyapp.com` carga el login
-- [ ] Login contra el EC2 (Network: `POST /api/v1/auth/login` 200)
-- [ ] Subida de PDF = PUT al bucket de documentos, no al hosting de Amplify
-- [ ] Preview del documento abre el modal
-
-El frontend detecta `method: PUT` en presigned URL y sube **directo a S3 de documentos**. Preview y descarga van a la API con JWT.
+- [ ] `https://xxxxx.amplifyapp.com` carga el login (candado HTTPS).
+- [ ] En DevTools → Network, el login es `https://xxxxx.amplifyapp.com/api/v1/auth/login` (no la IP).
+- [ ] PUT del PDF va a `*.s3.*.amazonaws.com`, no a Amplify.
+- [ ] Parás y arrancás el EC2: misma Elastic IP → el login sigue funcionando.
 
 ---
 
