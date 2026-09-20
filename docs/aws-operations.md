@@ -309,13 +309,43 @@ Mientras la EIP esté asociada a la instancia, **no cambia**. Si tirás la VM y 
 ### Aprovisionar (resumen)
 
 ```bash
-# Ubuntu 24.04 ARM, t4g.micro, 8–16 GB disco gp3
+# Ubuntu 24.04 ARM, t4g.micro, 16 GB disco gp3 (el build de Maven necesita swap)
 sudo apt-get update
-sudo apt-get install -y openjdk-21-jre-headless
-# o Docker si preferís el Dockerfile del repo
+sudo apt-get install -y docker.io docker-compose-v2 git nginx
+sudo usermod -aG docker ubuntu
+# volvé a entrar por SSH para que el grupo docker aplique
 ```
 
-Variables mínimas en `/etc/pilo.env`:
+### Cómo desplegar el back (clonar + Docker)
+
+**Correr con Docker, sí. Compilar Maven a mano, no.**  
+**Buildear la imagen en el propio EC2, sí** (el micro es ARM; tu WSL suele ser x86 y la imagen no arranca).
+
+El `t4g.micro` tiene 1 GB: sin swap el `docker build` se muere. Antes de clonar:
+
+```bash
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+```bash
+git clone TU_REPO pilo
+cd pilo
+cp .env.example .env.aws
+nano .env.aws    # pegá las variables de abajo; la DB es RDS, no el compose local
+docker compose -f docker-compose.ec2.yml up -d --build
+```
+
+Eso **solo** levanta Spring. **No** uses `docker-compose.yml`: ese archivo es Postgres de desarrollo y chocaría con RDS.
+
+La primera build baja Maven (~unos minutos). Después `up -d` es rápido. El contenedor publica `127.0.0.1:8080`; nginx (siguiente apartado) escucha en `:80`.
+
+No ejecutes `pnpm` ni el worker en esta máquina.
+
+Variables mínimas en `pilo/.env.aws` (no lo subas a git):
 
 ```bash
 SPRING_PROFILES_ACTIVE=aws
@@ -325,7 +355,8 @@ SPRING_DATASOURCE_PASSWORD=...
 SPRING_DATASOURCE_MAX_POOL_SIZE=5
 SPRING_DATASOURCE_MIN_IDLE=1
 SERVER_TOMCAT_MAX_THREADS=20
-SERVER_ADDRESS=127.0.0.1
+# 0.0.0.0 dentro del contenedor; el host solo publica 127.0.0.1:8080
+SERVER_ADDRESS=0.0.0.0
 SERVER_PORT=8080
 PILO_JWT_SECRET=...          # 32+ bytes
 PILO_INTERNAL_API_KEY=...
@@ -344,26 +375,17 @@ IAM del EC2 (instance profile, no access keys en disco):
 - `s3:PutObject`, `s3:GetObject`, `s3:AbortMultipartUpload` en `arn:aws:s3:::TU-BUCKET/cases/*`
 - Nada de `s3:*` ni `AdministratorAccess`
 
-### Build
+### Actualizar el API
 
 ```bash
-cd pilo-backend
-./mvnw -B package -DskipTests
-java -jar target/pilo-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=aws
+cd ~/pilo
+git pull
+docker compose -f docker-compose.ec2.yml up -d --build
 ```
 
-O Docker:
+No hace falta `mvn` en el host: el Dockerfile es multi-stage.
 
-```bash
-docker build -t pilo-backend ./pilo-backend
-docker run --env-file /etc/pilo.env -p 127.0.0.1:8080:8080 --memory=768m --cpus=1 pilo-backend
-```
-
-`--memory=768m` evita que el contenedor mate al kernel del micro.
-
-Spring debe escuchar solo en loopback cuando hay nginx: `SERVER_ADDRESS=127.0.0.1` en `/etc/pilo.env`.
-
-### Nginx delante del JAR (sí, conviene)
+### Nginx delante del contenedor (sí, conviene)
 
 No pongas Tomcat en internet. Nginx en el mismo EC2 ocupa poco RAM y deja un puerto normal:
 

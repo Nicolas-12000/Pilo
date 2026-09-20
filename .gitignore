@@ -26,6 +26,7 @@ Desktop.ini
 # Secrets / local env
 .env
 .env.local
+.env.aws
 .env.*.local
 *.pem
 *.p12

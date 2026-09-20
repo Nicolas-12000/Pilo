@@ -1,0 +1,27 @@
+# Backend only — for the EC2 t4g.micro. Do NOT start docker-compose.yml
+# (that file is local Postgres; production DB is RDS).
+#
+#   sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+#   cp .env.example .env.aws   # then edit
+#   docker compose -f docker-compose.ec2.yml up -d --build
+#
+# Bind 127.0.0.1:8080 so nginx on the host can proxy :80. Spring listens on
+# 0.0.0.0 inside the container.
+
+services:
+  backend:
+    build:
+      context: ./pilo-backend
+    image: pilo-backend:ec2
+    container_name: pilo-backend
+    env_file:
+      - .env.aws
+    environment:
+      SPRING_PROFILES_ACTIVE: aws
+      SERVER_ADDRESS: 0.0.0.0
+      SERVER_PORT: "8080"
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: 1.0
