@@ -52,10 +52,52 @@ Ciudadano / Revisor
 
 ### VPC mínima (sí, una VPC)
 
-1. VPC por defecto de la región **o** una VPC simple: 1 subnet pública (EC2), 1 subnet privada (RDS).
-2. Security group `pilo-ec2`: 22 solo tu IP, **80** al mundo (nginx). No abras **8080**.
-3. Security group `pilo-rds`: **5432 solo desde `pilo-ec2`**.
-4. **Sin NAT.** El EC2 tiene IP pública para salir a BOE, datos.gob.es y Gemini (si algún día procesás inline). La Lambda sale por su propia red.
+AWS **siempre** mete EC2, RDS y Lambda en una VPC. En free tier usás la **VPC por defecto** de la región (no hace falta crear otra; crear NAT/subnets custom es lo que cobra).
+
+```
+VPC (default, eu-west-1)
+│
+├─ Subnet pública
+│    EC2  Elastic IP
+│    SG pilo-ec2:   22 = solo TU IP
+│                   80 = 0.0.0.0/0   (nginx; Amplify + Lambda)
+│                   8080 = NADA
+│    Spring solo en 127.0.0.1:8080 (no sale al SG)
+│
+├─ Subnet de RDS (sin IP pública)
+│    RDS PostgreSQL
+│    SG pilo-rds:   5432 = SOLO SG pilo-ec2
+│
+├─ S3 pilo-docs     Block Public Access ON
+│    objetos solo con presigned URL o IAM del EC2/Lambda
+│
+└─ Lambda worker    no está “en tu subnet”; AWS la ejecuta
+                    y sale a internet para pegarle al Elastic IP :80
+                    con X-Internal-Api-Key
+```
+
+**Sin NAT Gateway.** El EC2 tiene IP pública para: SSH (tu IP), nginx, y para que Spring salga a BOE/datos.gob.es. RDS **nunca** tiene IP pública.
+
+### Qué está protegido (defensa + demo)
+
+| Capa | Qué hay | Gratis |
+|------|---------|--------|
+| Red | RDS inaccesible desde internet; 8080 cerrado; SSH restringido | Sí |
+| Discos | PDFs en S3 privado, no en el EC2 | Sí |
+| App | JWT + roles USER/REVIEWER/ADMIN; login con rate limit; CORS = Amplify | Sí |
+| Worker | `/internal/**` exige `X-Internal-Api-Key` (comparación constant-time) | Sí |
+| IAM | Instance profile: solo `s3:Get/Put` en `cases/*` | Sí |
+| Front | HTTPS en Amplify (ellos terminan TLS) | Sí |
+
+### Qué es un compromiso de prototipo (decirlo en la defensa)
+
+- **Puerto 80 en HTTP** entre Amplify/Lambda y nginx. Sin dominio no hay Let's Encrypt. El navegador igual ve HTTPS (Amplify).
+- **EC2 en subnet pública.** Evitamos NAT (~32 USD/mes). El API queda alcanzable en `:80`; nginx solo proxya `/api` y `/actuator/health`.
+- **Health público** (`GET /actuator/health`) sin detalles de config.
+- **Sin WAF / Shield avanzado.** Para un TFG con budget 5 USD no aplica.
+- Cuentas demo: **desactivar** `NEXT_PUBLIC_ENABLE_DEMO_LOGIN` y no usar `Password123!` en Amplify.
+
+Secretos (`PILO_JWT_SECRET`, password RDS, `PILO_INTERNAL_API_KEY`) van en `.env.aws` en el disco del EC2 (chmod 600) o, si querés un plus, SSM Parameter Store (free tier da para unos parámetros). **Nunca** en Git.
 
 ---
 
@@ -65,7 +107,7 @@ Ciudadano / Revisor
 |------------|--------------------------|----------------------------------------|
 | Worker Lambda | `pilo-worker/` (Python) | Crear función, trigger S3, IAM, env vars |
 | Storage S3 | `S3ObjectStorage`, presigned PUT | Bucket, CORS, evento `ObjectCreated` |
-| Frontend | Next.js (Amplify lo construye) | Amplify Hosting + `NEXT_PUBLIC_API_URL` + CORS |
+| Frontend | Next.js (Amplify lo construye) | Amplify Hosting + rewrite `/api` + CORS |
 | Secretos | Lee env vars / Parameter Store | Crear parámetros y secrets en AWS/GitHub |
 | Terraform | Outputs esperados documentados abajo | Módulos, state, `apply` |
 | CD | Workflow de ejemplo en §8 | Secrets en GitHub Actions |
