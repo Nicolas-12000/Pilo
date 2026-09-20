@@ -158,4 +158,5 @@ export type ExternalReference = {
   title: string;
   url: string | null;
   snippet: string | null;
+  demo: boolean;
 };

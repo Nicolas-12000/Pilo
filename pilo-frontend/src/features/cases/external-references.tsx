@@ -90,9 +90,16 @@ export function ExternalReferences({ defaultQuery }: ExternalReferencesProps) {
 }
 
 function ResultList({ source, results }: { source: string; results: ExternalReference[] }) {
+  const liveCount = results.filter((item) => !item.demo).length;
+  const demoCount = results.length - liveCount;
+
   return (
     <div>
-      <Badge tone="external">{source}</Badge>
+      <div className="flex flex-wrap items-center gap-xs">
+        <Badge tone="external">{source}</Badge>
+        {liveCount > 0 ? <Badge tone="approved">{liveCount} en vivo</Badge> : null}
+        {demoCount > 0 ? <Badge tone="under-review">{demoCount} demo</Badge> : null}
+      </div>
       {results.length === 0 ? (
         <p className="mt-xs text-body-sm text-on-surface-variant">Sin resultados.</p>
       ) : (
@@ -102,7 +109,10 @@ function ResultList({ source, results }: { source: string; results: ExternalRefe
               key={`${item.sourceName}-${item.externalId}`}
               className="rounded-sm bg-surface-container-low p-sm"
             >
-              <p className="font-code text-secondary">{item.externalId}</p>
+              <div className="flex flex-wrap items-center gap-xs">
+                <p className="font-code text-secondary">{item.externalId}</p>
+                {item.demo ? <Badge tone="under-review">Demo</Badge> : <Badge tone="approved">En vivo</Badge>}
+              </div>
               {item.url ? (
                 <a
                   href={item.url}

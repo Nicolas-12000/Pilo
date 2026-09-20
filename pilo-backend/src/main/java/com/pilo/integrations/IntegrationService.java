@@ -5,9 +5,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -30,62 +34,8 @@ public class IntegrationService {
 	}
 
 	public List<ExternalReferenceResponse> searchBoe(String query) {
-		String normalized = normalizeQuery(query);
-		if (normalized.isBlank()) {
-			return List.of();
-		}
-
 		try {
-			String body = restClient
-					.get()
-					.uri(properties.boeBaseUrl() + "/{date}", "20260101")
-					.retrieve()
-					.body(String.class);
-			if (body != null && body.toLowerCase(Locale.ROOT).contains(normalized.toLowerCase(Locale.ROOT))) {
-				return List.of(ExternalReferenceResponse.of(
-						"BOE",
-						"boe-sumario-20260101",
-						"Referencia normativa relacionada con " + normalized,
-						"https://www.boe.es/datosabiertos/",
-						"Resultado encontrado en el sumario abierto del BOE."));
-			}
-		} catch (Exception ignored) {
-			// Fall back below when the remote API is unavailable.
-		}
-
-		return demoFallback(
-				"BOE",
-				normalized,
-				"https://www.boe.es/",
-				"Fuente normativa pública de referencia para el trámite.");
-	}
-
-	public List<ExternalReferenceResponse> searchDatos(String query) {
-		return searchCatalog("datos.gob.es", properties.datosBaseUrl(), query, "Catálogo de datos abiertos");
-	}
-
-	public List<ExternalReferenceResponse> searchSia(String query) {
-		return searchCatalog(
-				"SIA",
-				properties.siaBaseUrl(),
-				"procedimiento administrativo " + query,
-				"Referencia del Sistema de Información Administrativa");
-	}
-
-	private List<ExternalReferenceResponse> searchCatalog(
-			String sourceName, String baseUrl, String query, String sourceLabel) {
-		String normalized = normalizeQuery(query);
-		if (normalized.isBlank()) {
-			return List.of();
-		}
-
-		try {
-			String body = restClient
-					.get()
-					.uri(baseUrl + "?q={query}&limit={limit}", normalized, MAX_RESULTS)
-					.retrieve()
-					.body(String.class);
-			List<ExternalReferenceResponse> parsed = parseCatalogResults(sourceName, body);
+			List<ExternalReferenceResponse> parsed = parseBoeLegislation(fetchBoeLegislation(query));
 			if (!parsed.isEmpty()) {
 				return parsed;
 			}
@@ -94,39 +44,97 @@ public class IntegrationService {
 		}
 
 		return demoFallback(
-				sourceName,
-				normalized,
-				"https://datos.gob.es/",
-				sourceLabel + " relacionado con " + normalized + ".");
+				"BOE",
+				query,
+				"https://www.boe.es/datosabiertos/",
+				"Referencia normativa de ejemplo. Consulte el BOE Datos Abiertos para normativa consolidada.");
 	}
 
-	private List<ExternalReferenceResponse> parseCatalogResults(String sourceName, String body) {
+	public List<ExternalReferenceResponse> searchDatos(String query) {
+		try {
+			List<ExternalReferenceResponse> parsed = parseDatosCatalog(fetchDatosCatalog(query));
+			if (!parsed.isEmpty()) {
+				return parsed;
+			}
+		} catch (Exception ignored) {
+			// Fall back below when the remote API is unavailable.
+		}
+
+		return demoFallback(
+				"datos.gob.es",
+				query,
+				"https://datos.gob.es/",
+				"Dataset de ejemplo del catálogo de datos abiertos.");
+	}
+
+	public List<ExternalReferenceResponse> searchSia(String query) {
+		try {
+			List<ExternalReferenceResponse> parsed = parseSiaCatalog(fetchDatosCatalog(query));
+			if (!parsed.isEmpty()) {
+				return parsed;
+			}
+		} catch (Exception ignored) {
+			// Fall back below when the remote API is unavailable.
+		}
+
+		return List.of(livePagReference(query));
+	}
+
+	String fetchBoeLegislation(String query) {
+		String searchQuery = buildBoeSearchQuery(query);
+		return restClient
+				.get()
+				.uri(UriComponentsBuilder.fromUriString(properties.boeLegislationUrl())
+						.queryParam("limit", MAX_RESULTS)
+						.queryParam("query", searchQuery)
+						.build(true)
+						.toUri())
+				.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+				.retrieve()
+				.body(String.class);
+	}
+
+	String fetchDatosCatalog(String query) {
+		String searchTerm = primarySearchTerm(query);
+		return restClient
+				.get()
+				.uri(properties.datosCatalogUrl() + "/title/{title}?_pageSize={pageSize}&_page=0", searchTerm, MAX_RESULTS)
+				.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+				.retrieve()
+				.body(String.class);
+	}
+
+	List<ExternalReferenceResponse> parseBoeLegislation(String body) {
 		if (body == null || body.isBlank()) {
 			return List.of();
 		}
 
 		try {
 			JsonNode root = objectMapper.readTree(body);
-			JsonNode items = root.path("result").path("items");
-			if (!items.isArray()) {
+			JsonNode data = root.path("data");
+			if (!data.isArray()) {
 				return List.of();
 			}
 
 			List<ExternalReferenceResponse> results = new ArrayList<>();
-			for (JsonNode item : items) {
-				String title = item.path("title").asString(null);
+			for (JsonNode item : data) {
+				String identifier = item.path("identificador").asString(null);
+				String title = item.path("titulo").asString(null);
 				if (title == null || title.isBlank()) {
 					continue;
 				}
-				String identifier = item.path("identifier").asString(null);
-				String url = item.path("_about").asString(null);
-				String description = item.path("description").asString(null);
-				results.add(ExternalReferenceResponse.of(
-						sourceName,
+				String url = item.path("url_html_consolidada").asString(null);
+				if (url == null || url.isBlank()) {
+					url = identifier == null
+							? "https://www.boe.es/datosabiertos/"
+							: "https://www.boe.es/buscar/act.php?id=" + identifier;
+				}
+				results.add(ExternalReferenceResponse.live(
+						"BOE",
 						identifier == null ? title : identifier,
 						title,
 						url,
-						description));
+						"Normativa consolidada publicada en el BOE."));
 				if (results.size() >= MAX_RESULTS) {
 					break;
 				}
@@ -137,20 +145,126 @@ public class IntegrationService {
 		}
 	}
 
+	List<ExternalReferenceResponse> parseDatosCatalog(String body) {
+		return parseCatalogItems("datos.gob.es", body, false);
+	}
+
+	List<ExternalReferenceResponse> parseSiaCatalog(String body) {
+		return parseCatalogItems("SIA", body, true);
+	}
+
+	private List<ExternalReferenceResponse> parseCatalogItems(
+			String sourceName, String body, boolean siaFilter) {
+		if (body == null || body.isBlank()) {
+			return List.of();
+		}
+
+		try {
+			JsonNode root = objectMapper.readTree(body);
+			JsonNode items = root.path("items");
+			if (!items.isArray()) {
+				return List.of();
+			}
+
+			List<ExternalReferenceResponse> results = new ArrayList<>();
+			for (JsonNode item : items) {
+				String title = readTextValue(item.path("title"));
+				if (title == null || title.isBlank()) {
+					continue;
+				}
+				String description = readTextValue(item.path("description"));
+				if (siaFilter && !matchesSiaContext(title, description)) {
+					continue;
+				}
+				String identifier = readTextValue(item.path("identifier"));
+				String url = item.path("_about").asString(null);
+				if (url == null || url.isBlank()) {
+					url = "https://datos.gob.es/";
+				}
+				results.add(ExternalReferenceResponse.live(
+						sourceName,
+						identifier == null ? title : identifier,
+						title,
+						url,
+						description == null || description.isBlank()
+								? "Dataset del catálogo de datos abiertos."
+								: truncate(description, 240)));
+				if (results.size() >= MAX_RESULTS) {
+					break;
+				}
+			}
+			return results;
+		} catch (Exception exception) {
+			return List.of();
+		}
+	}
+
+	private ExternalReferenceResponse livePagReference(String query) {
+		String url = UriComponentsBuilder.fromUriString(properties.siaPagSearchUrl())
+				.queryParam("texto", query)
+				.build(true)
+				.toUriString();
+		return ExternalReferenceResponse.live(
+				"SIA",
+				"pag-tramites-search",
+				"Buscador oficial de trámites administrativos",
+				url,
+				"El SIA no expone una API pública general. Enlace al buscador oficial de trámites de la Administración Pública.");
+	}
+
 	private List<ExternalReferenceResponse> demoFallback(
 			String sourceName, String query, String url, String snippet) {
 		if (!properties.demoFallbackEnabled()) {
 			return List.of();
 		}
-		return List.of(ExternalReferenceResponse.of(
+		return List.of(ExternalReferenceResponse.demo(
 				sourceName,
 				"demo-" + URLEncoder.encode(query, StandardCharsets.UTF_8),
 				sourceName + ": " + query,
 				url,
-				snippet));
+				snippet + " Resultado de ejemplo (demo)."));
 	}
 
-	private static String normalizeQuery(String query) {
-		return query == null ? "" : query.trim();
+	static String buildBoeSearchQuery(String query) {
+		String sanitized = query.trim().replaceAll("\\s+", " ");
+		String escaped = sanitized.replace("\"", "\\\"");
+		return "{\"query\":{\"query_string\":{\"query\":\"texto:" + escaped + "\"}},"
+				+ "\"sort\":[{\"fecha_publicacion\":\"desc\"}]}";
+	}
+
+	static String primarySearchTerm(String query) {
+		String[] words = query.trim().split("\\s+");
+		for (String word : words) {
+			if (word.length() >= 3) {
+				return word.toLowerCase(Locale.ROOT);
+			}
+		}
+		return query.trim().toLowerCase(Locale.ROOT);
+	}
+
+	static boolean matchesSiaContext(String title, String description) {
+		String combined = ((title == null ? "" : title) + " " + (description == null ? "" : description))
+				.toLowerCase(Locale.ROOT);
+		return combined.contains("procedimiento")
+				|| combined.contains("administrativ")
+				|| combined.contains("tramit")
+				|| combined.contains("sia");
+	}
+
+	static String readTextValue(JsonNode node) {
+		if (node.isArray()) {
+			return node.values().stream()
+					.map(value -> value.path("_value").asString(value.asString(null)))
+					.filter(value -> value != null && !value.isBlank())
+					.collect(Collectors.joining(" "));
+		}
+		return node.asString(null);
+	}
+
+	private static String truncate(String value, int maxLength) {
+		if (value.length() <= maxLength) {
+			return value;
+		}
+		return value.substring(0, maxLength - 1).trim() + "…";
 	}
 }

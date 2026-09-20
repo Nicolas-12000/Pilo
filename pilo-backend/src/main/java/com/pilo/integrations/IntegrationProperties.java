@@ -5,24 +5,29 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "pilo.integrations")
 public record IntegrationProperties(
-		String boeBaseUrl,
-		String datosBaseUrl,
-		String siaBaseUrl,
+		String boeLegislationUrl,
+		String datosCatalogUrl,
+		String siaPagSearchUrl,
 		Duration timeout,
-		boolean demoFallbackEnabled) {
+		boolean demoFallbackEnabled,
+		int maxQueryLength) {
 
 	public IntegrationProperties {
-		if (boeBaseUrl == null || boeBaseUrl.isBlank()) {
-			boeBaseUrl = "https://www.boe.es/datosabiertos/api/boe/sumario";
+		if (boeLegislationUrl == null || boeLegislationUrl.isBlank()) {
+			boeLegislationUrl = "https://boe.es/datosabiertos/api/legislacion-consolidada";
 		}
-		if (datosBaseUrl == null || datosBaseUrl.isBlank()) {
-			datosBaseUrl = "https://datos.gob.es/apidata/catalog/dataset";
+		if (datosCatalogUrl == null || datosCatalogUrl.isBlank()) {
+			datosCatalogUrl = "https://datos.gob.es/apidata/catalog/dataset";
 		}
-		if (siaBaseUrl == null || siaBaseUrl.isBlank()) {
-			siaBaseUrl = "https://datos.gob.es/apidata/catalog/dataset";
+		if (siaPagSearchUrl == null || siaPagSearchUrl.isBlank()) {
+			siaPagSearchUrl =
+					"https://administracion.gob.es/pagFront/recursosAEM/recursos/tramites/busqueda.htm";
 		}
 		if (timeout == null) {
 			timeout = Duration.ofSeconds(4);
+		}
+		if (maxQueryLength <= 0) {
+			maxQueryLength = 120;
 		}
 	}
 }
