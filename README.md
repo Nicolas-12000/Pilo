@@ -468,9 +468,6 @@ Base path: `/api/v1`
 | `POST` | `/auth/login`                            | Autenticación y emisión de JWT       |
 | `GET`  | `/procedures/types`                      | Catálogo de tipos de trámite         |
 | `GET`  | `/procedures/types/{id}`                 | Detalle de un tipo de trámite        |
-| `GET`  | `/integrations/boe/search?query={q}`     | Buscar información pública del BOE   |
-| `GET`  | `/integrations/datos/search?query={q}`   | Buscar catálogo de datos públicos    |
-| `GET`  | `/integrations/sia/search?query={q}`     | Referencias SIA (catálogo público)   |
 
 ### Endpoints autenticados (Bearer JWT)
 
@@ -485,8 +482,12 @@ Base path: `/api/v1`
 | `GET`  | `/cases/{id}`                                | Detalle, requisitos y timeline de auditoría   |
 | `POST` | `/cases/{id}/documents/upload`               | Subir documento (multipart, modo local)       |
 | `GET`  | `/cases/{id}/documents`                      | Documentos con extracción IA y fallos de regla |
+| `GET`  | `/cases/{id}/documents/{docId}/content`      | Vista previa o descarga (`?download=true`)     |
 | `GET`  | `/cases/{id}/workflow`                       | Estado del workflow                           |
 | `POST` | `/cases/{id}/workflow/final-review`          | Aprobar o rechazar expediente (REVIEWER/ADMIN)|
+| `GET`  | `/integrations/boe/search?query={q}`         | Legislación consolidada del BOE               |
+| `GET`  | `/integrations/datos/search?query={q}`       | Catálogo datos.gob.es                         |
+| `GET`  | `/integrations/sia/search?query={q}`         | Referencia SIA / buscador PAG                 |
 
 ### Endpoints internos (API key entre servicios)
 
@@ -538,21 +539,18 @@ No se propagan modelos de APIs externas por el dominio interno.
 
 ### BOE OpenData
 
-- Consultar información normativa pública.
-- Asociar referencias normativas con tipos de trámite.
-- Mostrar fuentes de referencia al usuario.
+- API de legislación consolidada (búsqueda por texto, no scraping).
+- Resultados en vivo con enlace a la norma; fallback demo etiquetado.
 
 ### datos.gob.es
 
-- Buscar datasets públicos por categoría administrativa.
-- Enriquecer el catálogo de referencias.
+- Catálogo DCAT por título (`/apidata/catalog/dataset/title/{término}`).
 
 ### SIA (referencial)
 
-- Búsqueda en catálogo público de procedimientos administrativos.
-- Mostrada junto a BOE y datos.gob.es en el detalle del expediente.
+- No hay API pública general del SIA. PILO filtra el catálogo abierto y, si no hay hit, enlaza el buscador oficial de trámites (PAG).
 
-Ambas integraciones incluyen **fallbacks demo** cuando las APIs externas no están disponibles (`pilo.integrations.demo-fallback-enabled`).
+Las búsquedas requieren JWT. `demo: true` marca resultados de ejemplo (`pilo.integrations.demo-fallback-enabled`).
 
 ---
 
@@ -726,9 +724,9 @@ cp pilo-frontend/.env.example pilo-frontend/.env.local
 
 3. **Opcional — IA real** (sin API key usa mock determinista):
 
-```bash
-GEMINI_API_KEY=your-key-here
-```
+   ```bash
+   GEMINI_API_KEY=your-key-here
+   ```
 
 4. **Opcional — PostgreSQL con Docker** (si no tienes uno):
 
