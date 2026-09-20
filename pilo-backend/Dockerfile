@@ -7,6 +7,7 @@ RUN chmod +x mvnw && ./mvnw -B package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN apk add --no-cache wget
 COPY --from=build /src/target/pilo-backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 # t4g.micro = 1 GB RAM. Leave room for the OS, nginx and SSH.
