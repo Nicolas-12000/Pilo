@@ -66,6 +66,9 @@ public class ApiExceptionHandler {
 			case "INVALID_FILE_NAME" -> "El nombre del archivo no es válido.";
 			case "INVALID_FILE_SIZE" -> "El archivo supera el tamaño permitido.";
 			case "INVALID_MIME_TYPE" -> "Solo se admiten PDF, JPG, PNG o WEBP.";
+			case "CANNOT_DISABLE_SELF" -> "No puedes desactivar tu propia cuenta.";
+			case "LAST_ADMIN" -> "Tiene que quedar al menos un administrador activo.";
+			case "USER_NOT_FOUND" -> "No hemos encontrado ese usuario.";
 			default -> "No se ha podido completar la petición.";
 		};
 	}

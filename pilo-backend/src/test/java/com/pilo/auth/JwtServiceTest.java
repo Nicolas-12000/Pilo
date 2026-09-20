@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 class JwtServiceTest {
 
 	private static final String SECRET = "test-secret-must-be-at-least-32-bytes-long!";
+	private static final String PREVIOUS = "previous-secret-must-be-at-least-32-bytes!";
 
 	@Test
 	void createsTokenWithUserClaims() {
@@ -26,6 +27,7 @@ class JwtServiceTest {
 		assertThat(principal.userId()).isEqualTo(user.getId());
 		assertThat(principal.email()).isEqualTo("ana@pilo.test");
 		assertThat(principal.role()).isEqualTo(Role.USER);
+		assertThat(principal.tokenVersion()).isZero();
 	}
 
 	@Test
@@ -44,6 +46,28 @@ class JwtServiceTest {
 		String token = jwtService.createAccessToken(user("ana@pilo.test", Role.REVIEWER));
 
 		assertThatThrownBy(() -> jwtService.parse(token + "x")).isInstanceOf(JwtException.class);
+	}
+
+	@Test
+	void acceptsTokenSignedWithPreviousSecretDuringRotation() {
+		JwtService oldIssuer = new JwtService(new JwtProperties(PREVIOUS, Duration.ofHours(1)));
+		String token = oldIssuer.createAccessToken(user("ana@pilo.test", Role.USER));
+
+		JwtService rotated = new JwtService(
+				new JwtProperties(SECRET, PREVIOUS, Duration.ofHours(1), "pilo", "pilo-api"));
+		JwtPrincipal principal = rotated.parse(token);
+
+		assertThat(principal.email()).isEqualTo("ana@pilo.test");
+	}
+
+	@Test
+	void rejectsPreviousSecretAfterItIsDropped() {
+		JwtService oldIssuer = new JwtService(new JwtProperties(PREVIOUS, Duration.ofHours(1)));
+		String token = oldIssuer.createAccessToken(user("ana@pilo.test", Role.USER));
+
+		JwtService rotated = new JwtService(new JwtProperties(SECRET, Duration.ofHours(1)));
+
+		assertThatThrownBy(() -> rotated.parse(token)).isInstanceOf(JwtException.class);
 	}
 
 	private static User user(String email, Role role) {

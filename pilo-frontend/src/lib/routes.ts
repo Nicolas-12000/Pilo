@@ -10,6 +10,7 @@ export const routes = {
   adminProcedures: "/admin/procedures",
   adminProcedureNew: "/admin/procedures/new",
   adminProcedure: (id: string) => `/admin/procedures/${id}`,
+  adminUsers: "/admin/users",
   loginNext: (nextPath: string) => `/login?next=${encodeURIComponent(nextPath)}`,
 } as const;
 

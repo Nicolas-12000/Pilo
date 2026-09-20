@@ -7,6 +7,10 @@ export type User = {
   role: Role;
 };
 
+export type AdminUser = User & {
+  enabled: boolean;
+};
+
 export type LoginResponse = {
   accessToken: string;
   tokenType: "Bearer";

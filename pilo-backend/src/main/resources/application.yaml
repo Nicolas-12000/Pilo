@@ -51,7 +51,10 @@ management:
 pilo:
   jwt:
     secret: ${PILO_JWT_SECRET:dev-only-change-me-to-a-256-bit-secret-key!!}
+    previous-secret: ${PILO_JWT_PREVIOUS_SECRET:}
     expiration: ${PILO_JWT_EXPIRATION:24h}
+    issuer: ${PILO_JWT_ISSUER:pilo}
+    audience: ${PILO_JWT_AUDIENCE:pilo-api}
   cors:
     allowed-origins: ${PILO_CORS_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001}
   seed:
@@ -113,5 +116,7 @@ pilo:
     provider: s3
   processing:
     mode: external
+  jwt:
+    expiration: ${PILO_JWT_EXPIRATION:2h}
   integrations:
     demo-fallback-enabled: ${PILO_INTEGRATIONS_DEMO_FALLBACK:false}

@@ -59,7 +59,10 @@ export async function updateProfile(fullName: string): Promise<User> {
   return (await response.json()) as User;
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<LoginResponse> {
   const response = await authFetch(`${API_URL}/api/v1/auth/me/password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -69,4 +72,6 @@ export async function changePassword(currentPassword: string, newPassword: strin
   if (!response.ok) {
     await readApiError(response);
   }
+
+  return (await response.json()) as LoginResponse;
 }

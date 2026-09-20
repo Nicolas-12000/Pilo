@@ -1,5 +1,7 @@
 package com.pilo.auth;
 
+import com.pilo.users.User;
+import com.pilo.users.UserRepository;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,9 +20,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtService jwtService;
+	private final UserRepository userRepository;
 
-	public JwtAuthenticationFilter(JwtService jwtService) {
+	public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
 		this.jwtService = jwtService;
+		this.userRepository = userRepository;
+	}
+
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		return request.getRequestURI().startsWith("/internal/");
 	}
 
 	@Override
@@ -32,12 +41,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			String token = header.substring(7);
 			try {
 				JwtPrincipal principal = jwtService.parse(token);
-				UsernamePasswordAuthenticationToken authentication =
-						new UsernamePasswordAuthenticationToken(
-								principal.userId().toString(),
-								null,
-								List.of(new SimpleGrantedAuthority("ROLE_" + principal.role().name())));
-				SecurityContextHolder.getContext().setAuthentication(authentication);
+				User user = userRepository.findById(principal.userId()).orElse(null);
+				if (user != null
+						&& user.isEnabled()
+						&& user.getTokenVersion() == principal.tokenVersion()) {
+					UsernamePasswordAuthenticationToken authentication =
+							new UsernamePasswordAuthenticationToken(
+									user.getId().toString(),
+									null,
+									List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+					SecurityContextHolder.getContext().setAuthentication(authentication);
+				} else {
+					SecurityContextHolder.clearContext();
+				}
 			} catch (JwtException | IllegalArgumentException ignored) {
 				SecurityContextHolder.clearContext();
 			}

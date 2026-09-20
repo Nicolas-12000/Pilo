@@ -36,7 +36,7 @@ public class AuthService {
 		User user = userRepository.findByEmailIgnoreCase(request.email()).orElse(null);
 		String hash = user != null ? user.getPasswordHash() : DUMMY_BCRYPT_HASH;
 		boolean matches = passwordEncoder.matches(request.password(), hash);
-		if (user == null || !matches) {
+		if (user == null || !user.isEnabled() || !matches) {
 			throw new InvalidCredentialsException();
 		}
 		return new LoginResponse(
@@ -56,7 +56,7 @@ public class AuthService {
 	}
 
 	@Transactional
-	public void changePassword(UUID userId, ChangePasswordRequest request) {
+	public LoginResponse changePassword(UUID userId, ChangePasswordRequest request) {
 		User user = userRepository
 				.findById(userId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
@@ -64,5 +64,11 @@ public class AuthService {
 			throw new InvalidCurrentPasswordException();
 		}
 		user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+		user.bumpTokenVersion();
+		return new LoginResponse(
+				jwtService.createAccessToken(user),
+				"Bearer",
+				jwtProperties.expiration().toSeconds(),
+				UserResponse.from(user));
 	}
 }

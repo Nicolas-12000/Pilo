@@ -29,7 +29,7 @@ import { ApiError } from "@/lib/api/client";
 import { authKeys } from "@/lib/api/queries";
 import type { Role } from "@/lib/api/types";
 import { useSession } from "@/lib/auth/use-session";
-import { updateStoredUser } from "@/lib/auth/session";
+import { persistSession, updateStoredUser } from "@/lib/auth/session";
 import { routes } from "@/lib/routes";
 import {
   changePasswordSchema,
@@ -102,7 +102,8 @@ export function ProfilePanel() {
   const savePassword = useMutation({
     mutationFn: (values: ChangePasswordValues) =>
       changePassword(values.currentPassword, values.newPassword),
-    onSuccess: () => {
+    onSuccess: (session) => {
+      persistSession(session);
       passwordForm.reset();
       setIsChangingPassword(false);
       toast.success("Contraseña actualizada.");

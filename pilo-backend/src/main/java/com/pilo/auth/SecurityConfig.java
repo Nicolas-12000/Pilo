@@ -43,7 +43,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**")
 						.permitAll()
 						.requestMatchers("/internal/**")
-						.permitAll()
+						.hasRole("INTERNAL")
 						.requestMatchers(HttpMethod.POST, "/api/v1/auth/login")
 						.permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/v1/procedures/types", "/api/v1/procedures/types/**")

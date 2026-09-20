@@ -1,4 +1,4 @@
-import { ClipboardCheck, FolderOpen, Home, Landmark, Settings2, User } from "lucide-react";
+import { ClipboardCheck, FolderOpen, Home, Landmark, Settings2, User, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { routes } from "@/lib/routes";
 
@@ -29,6 +29,14 @@ export const navItems: NavItem[] = [
     href: routes.adminProcedures,
     label: "Administración",
     icon: Settings2,
+    requiresAuth: true,
+    requiresAdmin: true,
+    hideOnMobile: true,
+  },
+  {
+    href: routes.adminUsers,
+    label: "Usuarios",
+    icon: Users,
     requiresAuth: true,
     requiresAdmin: true,
     hideOnMobile: true,

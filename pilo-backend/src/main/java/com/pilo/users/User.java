@@ -33,6 +33,12 @@ public class User {
 	@Column(nullable = false, length = 32)
 	private Role role;
 
+	@Column(nullable = false)
+	private boolean enabled = true;
+
+	@Column(name = "token_version", nullable = false)
+	private int tokenVersion;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -84,6 +90,26 @@ public class User {
 
 	public void setRole(Role role) {
 		this.role = role;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public int getTokenVersion() {
+		return tokenVersion;
+	}
+
+	public void setTokenVersion(int tokenVersion) {
+		this.tokenVersion = tokenVersion;
+	}
+
+	public void bumpTokenVersion() {
+		this.tokenVersion++;
 	}
 
 	public Instant getCreatedAt() {

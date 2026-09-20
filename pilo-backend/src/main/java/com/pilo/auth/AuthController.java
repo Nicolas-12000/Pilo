@@ -61,10 +61,9 @@ public class AuthController {
 	}
 
 	@PostMapping("/me/password")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void changePassword(
+	public LoginResponse changePassword(
 			Authentication authentication, @Valid @RequestBody ChangePasswordRequest request) {
 		UUID userId = UUID.fromString(authentication.getName());
-		authService.changePassword(userId, request);
+		return authService.changePassword(userId, request);
 	}
 }

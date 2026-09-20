@@ -166,7 +166,8 @@ class AuthControllerIT extends AbstractIntegrationTest {
 						.content("""
 								{"currentPassword":"Password123!","newPassword":"NewPassword456!"}
 								"""))
-				.andExpect(status().isNoContent());
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.accessToken").isNotEmpty());
 
 		mockMvc.perform(post("/api/v1/auth/login")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -211,5 +212,36 @@ class AuthControllerIT extends AbstractIntegrationTest {
 						"""))
 				.andExpect(status().isOk())
 				.andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:3000"));
+	}
+
+	@Test
+	void loginRejectsDisabledUser() throws Exception {
+		User user = userRepository.findByEmailIgnoreCase("user@pilo.test").orElseThrow();
+		user.setEnabled(false);
+		userRepository.save(user);
+
+		mockMvc.perform(post("/api/v1/auth/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"email":"user@pilo.test","password":"Password123!"}
+								"""))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.error").value("INVALID_CREDENTIALS"));
+	}
+
+	@Test
+	void meRejectsTokenAfterPasswordChange() throws Exception {
+		String oldToken = loginAndGetToken();
+
+		mockMvc.perform(post("/api/v1/auth/me/password")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + oldToken)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"currentPassword":"Password123!","newPassword":"NewPassword456!"}
+								"""))
+				.andExpect(status().isOk());
+
+		mockMvc.perform(get("/api/v1/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + oldToken))
+				.andExpect(status().isUnauthorized());
 	}
 }
