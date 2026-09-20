@@ -14,9 +14,9 @@ Ciudadano / Revisor
         │
         ▼
 ┌──────────────────────┐     HTTPS      ┌─────────────────────────────┐
-│ Frontend             │ ──────────────►│ EC2 t4g.micro (VPC pública) │
-│ Amplify o Vercel     │                │ Solo Spring Boot (API)      │
-│ (NO en el EC2)       │                └──────────┬────────┬─────────┘
+│ Frontend Next.js     │ ──────────────►│ EC2 t4g.micro (VPC pública) │
+│ Amplify Hosting      │                │ Solo Spring Boot (API)      │
+│ (CloudFront + SSR)   │                └──────────┬────────┬─────────┘
 └──────────────────────┘                           │        │
                                                    │        │ SG :5432
                       PUT presigned                │        ▼
@@ -31,7 +31,7 @@ Ciudadano / Revisor
 
 | Pieza | Dónde | Por qué |
 |-------|--------|---------|
-| **Frontend Next.js** | **Amplify Hosting** (AWS) o **Vercel** (gratis). **No en el EC2. No en el bucket de documentos.** | Next no es un `index.html` estático (`force-dynamic`). En el mismo `t4g.micro` que Java se queda sin RAM y se cae. S3 estático solo valdría con `output: 'export'`, que hoy no encaja con las rutas dinámicas. |
+| **Frontend Next.js** | **Amplify Hosting** (AWS). **No en el EC2. No en el bucket `pilo-docs`.** | Toda la arquitectura queda en AWS. Amplify sirve SSR/SSG de Next (CloudFront + compute gestionado). El `t4g.micro` no aguanta Java + Node. El bucket de documentos es privado y no es un sitio web. |
 | **Backend Spring** | **EC2 t4g.micro** (ARM, Ubuntu) | Un JAR, ~400–650 MB heap. Perfil `aws` baja el pool de BD a 5 y Tomcat a 20 hilos. |
 | **PostgreSQL** | **RDS db.t4g.micro** en la **misma VPC**, **sin acceso público** | El EC2 entra por security group al puerto 5432. No abras RDS a `0.0.0.0`. |
 | **Documentos** | **S3 privado** (`pilo-docs-*`) | El EC2 no guarda PDFs en disco. Upload = presigned PUT. Preview/descarga autenticada pasa por la API (máx. 10–15 MB). |
@@ -65,7 +65,7 @@ Ciudadano / Revisor
 |------------|--------------------------|----------------------------------------|
 | Worker Lambda | `pilo-worker/` (Python) | Crear función, trigger S3, IAM, env vars |
 | Storage S3 | `S3ObjectStorage`, presigned PUT | Bucket, CORS, evento `ObjectCreated` |
-| Backend API | Spring Boot + perfil `aws` | RDS, despliegue (ECS/EC2/Render/etc.) |
+| Frontend | Next.js (Amplify lo construye) | Amplify Hosting + `NEXT_PUBLIC_API_URL` + CORS |
 | Secretos | Lee env vars / Parameter Store | Crear parámetros y secrets en AWS/GitHub |
 | Terraform | Outputs esperados documentados abajo | Módulos, state, `apply` |
 | CD | Workflow de ejemplo en §8 | Secrets en GitHub Actions |
@@ -195,7 +195,7 @@ Policies mínimas:
     "AllowedMethods": ["PUT", "GET", "HEAD"],
     "AllowedOrigins": [
       "http://localhost:3000",
-      "https://TU-FRONTEND.com"
+      "https://TU-APP.amplifyapp.com"
     ],
     "ExposeHeaders": ["ETag"],
     "MaxAgeSeconds": 3000
@@ -355,37 +355,80 @@ Checklist backend:
 - [ ] Flyway OK en logs
 - [ ] Presigned URL `method: PUT` hacia S3
 - [ ] Preview `GET /api/v1/cases/{id}/documents/{docId}/content` con JWT
-- [ ] CORS = origen real del frontend (Amplify/Vercel)
+- [ ] CORS = origen Amplify (`https://….amplifyapp.com`)
 
 Apagá la instancia (`stop`, no terminate) cuando no demos. RDS igual.
 
 ---
 
-## Paso 7 — Frontend: Amplify o Vercel, no EC2 ni S3 de documentos
+## Paso 7 — Frontend en Amplify Hosting (toda la arquitectura en AWS)
 
-El frontend es Next.js con rutas dinámicas (`/cases/[id]`). **No lo subas como sitio estático al bucket de PDFs** y **no lo arranques con `next start` en el mismo EC2** que Spring.
+Sí: el front **debe estar en AWS** para la defensa. La pieza correcta es **Amplify Hosting**, no el EC2 y no el S3 de PDFs.
 
-| Opción | Cuándo | Coste |
-|--------|--------|-------|
-| **Amplify Hosting** (recomendado si querés “todo AWS”) | Conectás el repo, build `pnpm build`, start `pnpm start` o framework Next | Free tier Amplify suele bastar para la demo |
-| **Vercel** | Más rápido de enseñar | 0 USD en hobby |
-| S3 + CloudFront estático | Solo si más adelante hacemos `output: 'export'` | Barato, hoy **no aplica** |
-| `next start` en el EC2 del API | Nunca en t4g.micro compartido | Se cae Java |
+| Dónde | ¿Para el front? | Motivo |
+|-------|-----------------|--------|
+| **Amplify Hosting** | **Sí — esta es la arquitectura** | Servicio AWS para Next.js. HTTPS, CDN (CloudFront) y build gestionados. Free tier de Amplify cubre una demo. |
+| Mismo EC2 que Spring | No | 1 GB RAM: Java se muere si levantás `next start`. |
+| S3 `pilo-docs` | No | Bucket **privado** de expedientes. No es hosting web. |
+| S3 público + CloudFront “estático” | No hoy | Haría falta `output: 'export'` y pregenerar `/cases/[id]`. Next de PILO es dinámico. |
+| Vercel | Solo plan B | Funciona, pero ya no es “todo AWS”. |
 
-```bash
-cd pilo-frontend
-pnpm install --frozen-lockfile
-pnpm build
+### 7.1 Crear la app
+
+1. [Amplify Console](https://console.aws.amazon.com/amplify/) → **Create new app** → **GitHub** (o subir zip de `pilo-frontend` si no querés conectar el repo).
+2. App name: `pilo-web`
+3. Root / monorepo: carpeta **`pilo-frontend`**
+4. Build settings (Amplify detecta Next; si no, usá esto):
+
+```yaml
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - corepack enable
+        - pnpm install --frozen-lockfile
+    build:
+      commands:
+        - pnpm build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
 ```
 
-Variable de build:
+Framework: **Next.js — SSR** (no “Static HTML”).
+
+### 7.2 Variables
+
+En Amplify → Environment variables:
 
 ```bash
-NEXT_PUBLIC_API_URL=https://api.tudominio.com
-# o http://EC2_PUBLIC_DNS:8080 en demo sin dominio
+NEXT_PUBLIC_API_URL=http://EC2_PUBLIC_DNS:8080
 ```
 
-El frontend detecta `method: PUT` en presigned URL y sube **directo a S3** (el EC2 no recibe el PDF). Preview y descarga van a la API con JWT.
+Cuando tengas dominio o nginx+TLS en el EC2, cambialo a `https://api.tudominio.com` y **redesplegá** (esa variable se incrusta en el build).
+
+En el backend:
+
+```bash
+PILO_CORS_ORIGINS=https://TU-APP.amplifyapp.com
+```
+
+CORS del bucket `pilo-docs`: el mismo origen Amplify (paso 3).
+
+### 7.3 Comprobar
+
+- [ ] `https://xxxxx.amplifyapp.com` carga el login
+- [ ] Login contra el EC2 (Network: `POST /api/v1/auth/login` 200)
+- [ ] Subida de PDF = PUT al bucket de documentos, no al hosting de Amplify
+- [ ] Preview del documento abre el modal
+
+El frontend detecta `method: PUT` en presigned URL y sube **directo a S3 de documentos**. Preview y descarga van a la API con JWT.
 
 ---
 
@@ -535,8 +578,8 @@ Cuando toque, **después** de tener EC2 + RDS + S3 + Lambda documental estables:
 | RDS db.t4g.micro | Stop/snapshot; Free Tier si aplica | 0–15 |
 | S3 documentos | < 1 GB, sin versionado, retención logs 3 días | < 1 |
 | Lambda documental | Cientos de invocaciones | < 1 |
-| Amplify / Vercel | Hobby / free tier | 0 |
-| NAT / ALB / segundo EC2 | **No crear** | — |
+| Amplify Hosting | Free tier; una app Next | 0–1 |
+| NAT / ALB / segundo EC2 / Vercel | **No hace falta** | — |
 | **Total si apagás máquinas** | | **~0–5** |
 
 Presupuesto: **Billing → Budgets → 5 USD**. Si llega el aviso, stop EC2 y RDS.
@@ -547,6 +590,6 @@ Orden práctico para vos al final (un sábado):
 2. VPC / SG (EC2 público, RDS privado).
 3. RDS micro + S3 privado + CORS.
 4. EC2 + JAR perfil `aws` + instance profile S3.
-5. Frontend Amplify/Vercel con `NEXT_PUBLIC_API_URL`.
+5. Frontend **Amplify Hosting** con `NEXT_PUBLIC_API_URL` → CORS en API y en S3.
 6. Lambda worker + trigger S3 (si querés IA fuera del EC2).
 7. Terraform / CD / Semgrep: otro día.
