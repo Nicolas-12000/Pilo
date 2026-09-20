@@ -29,7 +29,6 @@ La inteligencia artificial se utiliza para el procesamiento de documentos: clasi
 - [Testing](#testing)
 - [Setup local](#setup-local)
 - [Demo](#demo)
-- [Evidencia (capturas)](#evidencia-capturas)
 - [Convenciones](#convenciones)
 
 ---
@@ -176,16 +175,10 @@ pilo/
 │       ├── s3/                    # Bucket S3
 │       └── lambda/                # Lambda functions
 │
-├── docs/                          # Guías operativas
-│   └── aws-operations.md          # Operaciones AWS y Terraform
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml                 # Pipeline CI con GitHub Actions
-│
 ├── docker-compose.yml             # PostgreSQL local (opcional)
-├── .env.example                   # Template de variables de entorno
-└── pilo.md                        # Especificación técnica completa
+├── docker-compose.ec2.yml         # API en el micro (perfil aws)
+├── .env.example
+└── .github/workflows/ci.yml
 ```
 
 ---
@@ -682,26 +675,19 @@ GitHub Actions
 
 ## Testing
 
-Detalle y cómo correrlos: [`docs/testing.md`](docs/testing.md).
-
 ### Backend
 
 ```bash
 cd pilo-backend && ./mvnw test
 ```
 
-- **Unitarias**: JWT, reglas de documento, parsers de BOE/datos.gob.es.
-- **Integración**: Testcontainers + PostgreSQL (hace falta Docker).
+- Unitarias e integración (Testcontainers + PostgreSQL; hace falta Docker).
 
 ### Frontend
 
 ```bash
 cd pilo-frontend && pnpm test
 ```
-
-Vitest + Testing Library.
-
-No hay E2E todavía. El checklist de capturas de la demo está en [`docs/evidence/`](docs/evidence/README.md).
 
 ---
 
@@ -794,14 +780,6 @@ Asegúrate de que `PILO_CORS_ORIGINS` incluya el puerto del frontend (`3000` y/o
 1. Login con `admin@pilo.test`.
 2. **Administración** → editar catálogo y reglas de validación.
 3. Puede ejecutar también el flujo de revisor.
-
-Guía operativa AWS (cuándo despliegues): [`docs/aws-operations.md`](docs/aws-operations.md).
-
----
-
-## Evidencia (capturas)
-
-Cuando existan, van en [`docs/evidence/`](docs/evidence/README.md) (catálogo, extracción IA, preview del revisor, BOE en vivo, resolución). Hoy la carpeta es el checklist; no hay PNG todavía.
 
 ---
 
