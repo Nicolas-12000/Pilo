@@ -14,10 +14,10 @@ Ciudadano / Revisor
         │
         ▼
 ┌──────────────────────┐     /api rewrite     ┌─────────────────────────────┐
-│ Amplify Hosting      │ ───────────────────► │ EC2 + Elastic IP :8080      │
-│ Next.js (la web)     │                      │ Solo Spring Boot            │
-│ https://*.amplifyapp │                      └──────────┬────────┬─────────┘
-└──────────────────────┘                           │        │
+│ Amplify Hosting      │ ───────────────────► │ EC2 Elastic IP :80 nginx    │
+│ Next.js (la web)     │                      │        ↓ 127.0.0.1:8080     │
+│ https://*.amplifyapp │                      │        Spring Boot          │
+└──────────────────────┘                      └──────────┬────────┬─────────┘
                                                    │        │ SG :5432
                       PUT presigned                │        ▼
         ┌──────────────────────────────────────────┘  ┌─────────────────┐
@@ -32,7 +32,7 @@ Ciudadano / Revisor
 | Pieza | Dónde | Por qué |
 |-------|--------|---------|
 | **Frontend Next.js** | **Amplify Hosting** (AWS). **No en el EC2. No en el bucket `pilo-docs`.** | Toda la arquitectura queda en AWS. Amplify sirve SSR/SSG de Next (CloudFront + compute gestionado). El `t4g.micro` no aguanta Java + Node. El bucket de documentos es privado y no es un sitio web. |
-| **Backend Spring** | **EC2 t4g.micro** (ARM, Ubuntu) | Un JAR, ~400–650 MB heap. Perfil `aws` baja el pool de BD a 5 y Tomcat a 20 hilos. |
+| **Backend Spring** | **EC2 t4g.micro** + **nginx :80** → JAR en `127.0.0.1:8080` | El micro no expone Tomcat. Amplify y Lambda entran por el puerto 80. |
 | **PostgreSQL** | **RDS db.t4g.micro** en la **misma VPC**, **sin acceso público** | El EC2 entra por security group al puerto 5432. No abras RDS a `0.0.0.0`. |
 | **Documentos** | **S3 privado** (`pilo-docs-*`) | El EC2 no guarda PDFs en disco. Upload = presigned PUT. Preview/descarga autenticada pasa por la API (máx. 10–15 MB). |
 | **IA documental** | **Lambda** `pilo-document-processor` | S3 `ObjectCreated` → extrae JSON → callback interno. Así Gemini **no corre en el EC2**. |
@@ -53,7 +53,7 @@ Ciudadano / Revisor
 ### VPC mínima (sí, una VPC)
 
 1. VPC por defecto de la región **o** una VPC simple: 1 subnet pública (EC2), 1 subnet privada (RDS).
-2. Security group `pilo-ec2`: 22 solo tu IP, 8080 (o 443 si ponés nginx) al mundo / al CloudFront.
+2. Security group `pilo-ec2`: 22 solo tu IP, **80** al mundo (nginx). No abras **8080**.
 3. Security group `pilo-rds`: **5432 solo desde `pilo-ec2`**.
 4. **Sin NAT.** El EC2 tiene IP pública para salir a BOE, datos.gob.es y Gemini (si algún día procesás inline). La Lambda sale por su propia red.
 
@@ -325,6 +325,8 @@ SPRING_DATASOURCE_PASSWORD=...
 SPRING_DATASOURCE_MAX_POOL_SIZE=5
 SPRING_DATASOURCE_MIN_IDLE=1
 SERVER_TOMCAT_MAX_THREADS=20
+SERVER_ADDRESS=127.0.0.1
+SERVER_PORT=8080
 PILO_JWT_SECRET=...          # 32+ bytes
 PILO_INTERNAL_API_KEY=...
 PILO_CORS_ORIGINS=https://TU-APP.amplifyapp.com
@@ -354,17 +356,74 @@ O Docker:
 
 ```bash
 docker build -t pilo-backend ./pilo-backend
-docker run --env-file /etc/pilo.env -p 8080:8080 --memory=768m --cpus=1 pilo-backend
+docker run --env-file /etc/pilo.env -p 127.0.0.1:8080:8080 --memory=768m --cpus=1 pilo-backend
 ```
 
 `--memory=768m` evita que el contenedor mate al kernel del micro.
 
+Spring debe escuchar solo en loopback cuando hay nginx: `SERVER_ADDRESS=127.0.0.1` en `/etc/pilo.env`.
+
+### Nginx delante del JAR (sí, conviene)
+
+No pongas Tomcat en internet. Nginx en el mismo EC2 ocupa poco RAM y deja un puerto normal:
+
+```
+Internet :80  →  nginx  →  127.0.0.1:8080  (Spring)
+```
+
+```bash
+sudo apt-get install -y nginx
+```
+
+`/etc/nginx/sites-available/pilo`:
+
+```nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    client_max_body_size 1m;
+
+    location /actuator/health {
+        proxy_pass http://127.0.0.1:8080;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+
+    location / {
+        return 404;
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/pilo /etc/nginx/sites-enabled/pilo
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Security group: **80 abierto**, **8080 cerrado**. Amplify y Lambda hablan con `http://ELASTIC_IP` (puerto 80).
+
+**HTTPS (443 + Let's Encrypt): no lo hagas todavía.** Hace falta un dominio (Route53). Amplify ya da HTTPS al navegador; el tramo Amplify → nginx puede ser HTTP en la demo. Cuando tengas `api.tudominio.com`, entonces `certbot --nginx` y el rewrite de Amplify pasa a `https://api.tudominio.com/api/<*>`.
+
+Lambda: `PILO_BACKEND_URL=http://ELASTIC_IP` (sin `:8080`).
+
 Checklist backend:
 
-- [ ] `GET /actuator/health` responde
+- [ ] `curl http://ELASTIC_IP/actuator/health` responde (por nginx)
+- [ ] `8080` no está abierto en el SG
 - [ ] Flyway OK en logs
 - [ ] Presigned URL `method: PUT` hacia S3
-- [ ] Preview `GET /api/v1/cases/{id}/documents/{docId}/content` con JWT
+- [ ] Preview autenticado funciona vía Amplify `/api/...`
 - [ ] CORS = origen Amplify (`https://….amplifyapp.com`)
 
 Apagá la instancia (`stop`, no terminate) cuando no demos. RDS igual.
@@ -391,7 +450,7 @@ Navegador
    │
    │  1. https://xxxx.amplifyapp.com/login          → HTML/JS (Amplify)
    │  2. https://xxxx.amplifyapp.com/api/v1/auth/login
-   │        rewrite 200 ───────────────────────────► EC2 Elastic IP:8080
+   │        rewrite 200 ───────────────────────────► nginx :80 → Spring :8080
    │  3. https://pilo-docs.s3.amazonaws.com/cases/…  → PDF (presigned, no es el front)
 ```
 
@@ -437,7 +496,7 @@ Amplify → **Hosting → Rewrites and redirects** → abrir el editor JSON y **
   {
     "source": "/api/<*>",
     "status": "200",
-    "target": "http://ELASTIC_IP:8080/api/<*>"
+    "target": "http://ELASTIC_IP/api/<*>"
   }
 ]
 ```
@@ -454,7 +513,7 @@ Aunque el browser hable con Amplify, Spring recibe `Origin: https://xxxx.amplify
 PILO_CORS_ORIGINS=https://TU-APP.amplifyapp.com
 ```
 
-Bucket `pilo-docs` → el mismo origen (paso 3). SG del EC2: **8080** abierto al menos a internet (Amplify proxya desde IPs de AWS, no desde el PC del alumno).
+Bucket `pilo-docs` → el mismo origen (paso 3). SG del EC2: **80** abierto (nginx). **8080 cerrado**.
 
 ### 7.4 Comprobar
 
