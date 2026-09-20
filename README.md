@@ -27,6 +27,7 @@ La inteligencia artificial se utiliza para el procesamiento de documentos: clasi
 - [Seguridad](#seguridad)
 - [CI/CD y DevSecOps](#cicd-y-devsecops)
 - [Testing](#testing)
+- [Evidencia (pruebas y fotos)](docs/evidence.md)
 - [Setup local](#setup-local)
 - [Demo](#demo)
 - [Convenciones](#convenciones)
@@ -175,8 +176,10 @@ pilo/
 │       ├── s3/                    # Bucket S3
 │       └── lambda/                # Lambda functions
 │
-├── docs/                          # Guías operativas
-│   └── aws-operations.md          # Operaciones AWS y Terraform
+├── docs/
+│   ├── aws-operations.md          # EC2, RDS, S3, Amplify, una Lambda
+│   ├── evidence.md                # Pruebas, capturas, alcance mid/senior
+│   └── screenshots/               # PNG de la demo (cuando existan)
 │
 ├── .github/
 │   └── workflows/
@@ -681,15 +684,16 @@ GitHub Actions
 
 ## Testing
 
+Detalle, tabla de suites y backlog: **[`docs/evidence.md`](docs/evidence.md)**. Capturas futuras: [`docs/screenshots/`](docs/screenshots/README.md).
+
 ### Backend
 
 ```bash
 cd pilo-backend && ./mvnw test
 ```
 
-- **Unit tests**: validadores, workflow transitions, cálculo de deadlines, reglas de autorización.
-- **Integration tests**: Testcontainers con PostgreSQL. No leen `.env` ni tocan la BD local.
-- **AI tests**: validación de schema, campos obligatorios, manejo de respuestas inválidas, confidence thresholds.
+- Unitarios: reglas de documento, JWT, parseo BOE/datos, preview.
+- Integración: Testcontainers + PostgreSQL (`*IT`). Hace falta Docker.
 
 ### Frontend
 
@@ -697,7 +701,7 @@ cd pilo-backend && ./mvnw test
 cd pilo-frontend && pnpm test
 ```
 
-- Vitest + Testing Library + jsdom.
+Vitest + Testing Library + jsdom.
 
 ---
 
