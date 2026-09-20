@@ -2,6 +2,9 @@ const validationFailureLabels: Record<string, string> = {
   CONFIDENCE: "La confianza de la IA está por debajo del umbral mínimo.",
   EXPECTED_DOCUMENT_TYPE: "El tipo de documento detectado no coincide con el requisito.",
   FUTURE_EXPIRATION: "La fecha de vencimiento no es válida o ya ha expirado.",
+  REQUIRED_FIELDS: "Faltan campos obligatorios extraídos del documento.",
+  ID_NUMBER_FORMAT: "El número de identificación no tiene un formato DNI/NIE válido.",
+  DATE_COHERENCE: "Las fechas extraídas no son coherentes entre sí.",
 };
 
 const extractionFieldLabels: Record<string, string> = {

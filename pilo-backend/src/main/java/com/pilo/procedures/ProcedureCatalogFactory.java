@@ -31,7 +31,7 @@ final class ProcedureCatalogFactory {
 				"Documento de identidad",
 				true,
 				"""
-				{"expectedDocumentType":"identity_document"}
+				{"expectedDocumentType":"identity_document","minConfidence":0.7}
 				""");
 		addRequirement(
 				procedureType,
@@ -62,7 +62,7 @@ final class ProcedureCatalogFactory {
 				"Documento de identidad",
 				true,
 				"""
-				{"expectedDocumentType":"identity_document"}
+				{"expectedDocumentType":"identity_document","minConfidence":0.7}
 				""");
 		addRequirement(
 				procedureType,

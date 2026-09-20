@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.pilo.ai.AiProperties;
 import com.pilo.ai.StructuredExtraction;
 import com.pilo.documents.validation.ConfidenceRule;
+import com.pilo.documents.validation.DateCoherenceRule;
 import com.pilo.documents.validation.ExpectedDocumentTypeRule;
 import com.pilo.documents.validation.FutureExpirationRule;
+import com.pilo.documents.validation.IdNumberFormatRule;
+import com.pilo.documents.validation.RequiredExtractionFieldsRule;
 import com.pilo.documents.validation.ValidationRulesParser;
 import com.pilo.procedures.Requirement;
 import java.util.List;
@@ -27,7 +30,10 @@ class DocumentValidationServiceTest {
 				List.of(
 						new ConfidenceRule(new AiProperties("mock", "", "gemini-2.0-flash", 0.5)),
 						new ExpectedDocumentTypeRule(),
-						new FutureExpirationRule()));
+						new RequiredExtractionFieldsRule(),
+						new IdNumberFormatRule(),
+						new FutureExpirationRule(),
+						new DateCoherenceRule()));
 	}
 
 	@Test
@@ -36,7 +42,7 @@ class DocumentValidationServiceTest {
 				new StructuredExtraction(
 						"rental_contract",
 						0.9,
-						"{\"expirationDate\":\"2099-01-01\"}"),
+						"{\"issueDate\":\"2026-01-01\",\"expirationDate\":\"2099-01-01\"}"),
 				requirement("{\"expectedDocumentType\":\"rental_contract\",\"requireFutureExpiration\":true}"));
 
 		assertThat(valid).isTrue();
@@ -59,6 +65,32 @@ class DocumentValidationServiceTest {
 				requirement("{\"expectedDocumentType\":\"identity_document\"}"));
 
 		assertThat(valid).isFalse();
+	}
+
+	@Test
+	void rejectsInvalidSpanishIdNumberForIdentityDocument() {
+		var result = documentValidationService.validate(
+				new StructuredExtraction(
+						"identity_document",
+						0.95,
+						"{\"personName\":\"Ana Usuario\",\"idNumber\":\"12345678X\",\"issueDate\":\"2026-01-01\",\"expirationDate\":\"2027-12-31\"}"),
+				requirement("{\"expectedDocumentType\":\"identity_document\",\"minConfidence\":0.7}"));
+
+		assertThat(result.valid()).isFalse();
+		assertThat(result.failures()).contains("ID_NUMBER_FORMAT");
+	}
+
+	@Test
+	void rejectsIncoherentDates() {
+		var result = documentValidationService.validate(
+				new StructuredExtraction(
+						"rental_contract",
+						0.95,
+						"{\"issueDate\":\"2027-01-01\",\"expirationDate\":\"2026-01-01\"}"),
+				requirement("{\"expectedDocumentType\":\"rental_contract\"}"));
+
+		assertThat(result.valid()).isFalse();
+		assertThat(result.failures()).contains("DATE_COHERENCE");
 	}
 
 	private static Requirement requirement(String rules) {

@@ -36,9 +36,11 @@ public class GeminiStructuredExtractionClient implements StructuredExtractionCli
 									Map.of(
 											"text",
 											"""
-											Extract structured administrative document data.
+											Extract structured administrative document data from the uploaded file only.
+											Do not invent values. If a field is not clearly visible, omit it.
 											Return JSON with keys documentType, confidence, extractedFields.
 											extractedFields may include personName, idNumber, issueDate, expirationDate, address.
+											confidence must reflect how clearly each field appears in the document.
 											Requirement code: %s
 											Expected document type: %s
 											"""

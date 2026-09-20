@@ -10,7 +10,7 @@ public class MockStructuredExtractionClient implements StructuredExtractionClien
 				: input.hint().expectedDocumentType();
 		String fields =
 				"""
-				{"personName":"Ana Usuario","idNumber":"12345678X","issueDate":"2026-01-01","expirationDate":"2027-12-31","address":"Calle Mayor 12, Madrid"}
+				{"personName":"Ana Usuario","idNumber":"12345678Z","issueDate":"2026-01-01","expirationDate":"2027-12-31","address":"Calle Mayor 12, Madrid"}
 				""";
 		return new StructuredExtraction(documentType, 0.95, fields);
 	}

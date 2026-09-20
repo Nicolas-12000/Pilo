@@ -24,7 +24,7 @@ def _extract_mock(expected_document_type: str) -> dict[str, Any]:
         "confidence": 0.95,
         "extractedFields": {
             "personName": "Ana Usuario",
-            "idNumber": "12345678X",
+            "idNumber": "12345678Z",
             "issueDate": "2026-01-01",
             "expirationDate": "2027-12-31",
             "address": "Calle Mayor 12, Madrid",
@@ -45,9 +45,11 @@ def _extract_gemini(
     model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     encoded = base64.b64encode(content).decode("ascii")
     prompt = (
-        "Extract structured administrative document data. "
+        "Extract structured administrative document data from the uploaded file only. "
+        "Do not invent values. If a field is not clearly visible, omit it. "
         "Return JSON with keys documentType, confidence, extractedFields. "
         "extractedFields may include personName, idNumber, issueDate, expirationDate, address. "
+        "confidence must reflect how clearly each field appears in the document. "
         f"Requirement code: {requirement_code}. Expected document type: {expected_document_type}."
     )
     payload = {
