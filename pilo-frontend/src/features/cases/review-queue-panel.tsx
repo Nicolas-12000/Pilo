@@ -26,7 +26,7 @@ export function ReviewQueuePanel() {
       <PageHeader
         eyebrow="Revisión"
         title="Expedientes pendientes"
-        description="Casos con documentación validada que esperan la revisión final."
+        description="Abre cada expediente, contrasta el documento original con los datos extraídos y resuelve. La IA no cierra el trámite."
       />
 
       {isPending ? (

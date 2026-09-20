@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,9 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentController {
 
 	private final DocumentService documentService;
+	private final DocumentContentService documentContentService;
 
-	public DocumentController(DocumentService documentService) {
+	public DocumentController(DocumentService documentService, DocumentContentService documentContentService) {
 		this.documentService = documentService;
+		this.documentContentService = documentContentService;
 	}
 
 	@PostMapping("/presigned-url")
@@ -47,5 +50,19 @@ public class DocumentController {
 	@GetMapping
 	public List<DocumentResponse> list(@PathVariable UUID caseId, Authentication authentication) {
 		return documentService.list(caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication));
+	}
+
+	@GetMapping("/{documentId}/content")
+	public ResponseEntity<byte[]> content(
+			@PathVariable UUID caseId,
+			@PathVariable UUID documentId,
+			@RequestParam(defaultValue = "false") boolean download,
+			Authentication authentication) {
+		return documentContentService.stream(
+				caseId,
+				documentId,
+				AuthSupport.userId(authentication),
+				AuthSupport.role(authentication),
+				download);
 	}
 }

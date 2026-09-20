@@ -68,7 +68,8 @@ export function FinalReviewActions({
     <Card className="border-outline-variant bg-surface-container">
       <CardTitle>Revisión final</CardTitle>
       <CardDescription className="mt-1">
-        Todos los documentos obligatorios están validados. Emite la resolución del expediente.
+        Los documentos obligatorios ya pasaron las reglas automáticas. Abre cada archivo, contrasta
+        los datos extraídos y emite la resolución. La IA no cierra el trámite.
       </CardDescription>
 
       <label className="mt-md flex flex-col gap-xs">

@@ -1,4 +1,5 @@
 import { AlertTriangle, FileText, Sparkles } from "lucide-react";
+import { DocumentFileActions } from "@/components/pilo/document-preview";
 import { StatusBadge } from "@/components/pilo/status-badge";
 import { formatFileSize } from "@/lib/cases/dates";
 import {
@@ -9,10 +10,25 @@ import {
 import { documentStatus } from "@/lib/cases/status";
 import type { DocumentRecord } from "@/lib/api/types";
 
-export function DocumentRow({ document }: { document: DocumentRecord }) {
+const PREVIEWABLE_STATUSES = new Set([
+  "UPLOADED",
+  "PROCESSING",
+  "VALIDATED",
+  "REJECTED",
+  "PROCESSING_FAILED",
+]);
+
+export function DocumentRow({
+  caseId,
+  document,
+}: {
+  caseId: string;
+  document: DocumentRecord;
+}) {
   const failures = document.validationFailures ?? [];
   const extraction = document.extraction;
   const extractionEntries = extraction ? orderedExtractionEntries(extraction.fields ?? {}) : [];
+  const canOpen = PREVIEWABLE_STATUSES.has(document.status);
 
   return (
     <li className="rounded-sm bg-surface-container-low p-sm">
@@ -26,7 +42,16 @@ export function DocumentRow({ document }: { document: DocumentRecord }) {
                 {formatFileSize(document.fileSize)}
               </p>
             </div>
-            <StatusBadge status={documentStatus[document.status]} />
+            <div className="flex items-center gap-xs">
+              <DocumentFileActions
+                caseId={caseId}
+                documentId={document.id}
+                fileName={document.fileName}
+                mimeType={document.mimeType}
+                disabled={!canOpen}
+              />
+              <StatusBadge status={documentStatus[document.status]} />
+            </div>
           </div>
 
           {document.processingFailureReason ? (
@@ -53,6 +78,9 @@ export function DocumentRow({ document }: { document: DocumentRecord }) {
                 <Sparkles size={16} strokeWidth={1.75} className="text-primary" />
                 Datos extraídos por IA
               </div>
+              <p className="mt-1 text-body-sm text-on-surface-variant">
+                Contrástalos con la vista previa. Si no coinciden, rechaza el documento o el expediente.
+              </p>
               <dl className="mt-sm grid gap-xs text-body-sm">
                 <div className="flex flex-wrap justify-between gap-x-md gap-y-0.5">
                   <dt className="text-on-surface-variant">Tipo detectado</dt>

@@ -61,6 +61,11 @@ public class ApiExceptionHandler {
 			case "REQUIREMENT_NOT_FOUND" -> "No hemos encontrado ese requisito.";
 			case "REQUIREMENT_MISMATCH" -> "Ese requisito no pertenece a este expediente.";
 			case "EMPTY_FILE" -> "El archivo está vacío.";
+			case "DOCUMENT_NOT_FOUND" -> "No hemos encontrado ese documento.";
+			case "DOCUMENT_NOT_READY" -> "El documento todavía no está disponible para previsualizar.";
+			case "INVALID_FILE_NAME" -> "El nombre del archivo no es válido.";
+			case "INVALID_FILE_SIZE" -> "El archivo supera el tamaño permitido.";
+			case "INVALID_MIME_TYPE" -> "Solo se admiten PDF, JPG, PNG o WEBP.";
 			default -> "No se ha podido completar la petición.";
 		};
 	}

@@ -83,7 +83,7 @@ export function RequirementItem({
       {documents.length > 0 ? (
         <ul className="mt-sm flex flex-col gap-xs">
           {documents.map((document) => (
-            <DocumentRow key={document.id} document={document} />
+            <DocumentRow key={document.id} caseId={caseId} document={document} />
           ))}
         </ul>
       ) : null}

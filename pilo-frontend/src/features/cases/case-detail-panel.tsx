@@ -104,8 +104,9 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
               ) : null}
             </div>
             <p className="mt-1 text-body-sm text-on-surface-variant">
-              Sube un documento por requisito. La IA extrae los datos y el sistema valida cada
-              documento contra las reglas del trámite.
+              Sube un archivo por requisito. La IA extrae tipo, titular, identificación y fechas;
+              las reglas del trámite deciden si queda validado o rechazado. Abre el documento para
+              contrastar los datos extraídos sin salir del expediente.
             </p>
 
             <ul className="mt-md flex flex-col gap-sm">

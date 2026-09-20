@@ -95,3 +95,25 @@ export async function uploadDocument(
 
   return (await response.json()) as DocumentRecord;
 }
+
+export async function fetchDocumentContent(
+  caseId: string,
+  documentId: string,
+  download = false,
+): Promise<Blob> {
+  const query = download ? "?download=true" : "";
+  const response = await authFetch(
+    `${getApiUrl()}/api/v1/cases/${caseId}/documents/${documentId}/content${query}`,
+    { cache: "no-store" },
+  );
+
+  if (!response.ok) {
+    await readApiError(response);
+  }
+
+  return response.blob();
+}
+
+export function isPreviewableMime(mimeType: string) {
+  return mimeType.startsWith("image/") || mimeType === "application/pdf";
+}
