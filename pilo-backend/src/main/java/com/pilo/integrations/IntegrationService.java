@@ -1,10 +1,18 @@
 package com.pilo.integrations;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +27,13 @@ import tools.jackson.databind.ObjectMapper;
 public class IntegrationService {
 
 	private static final int MAX_RESULTS = 5;
+	private static final Duration CACHE_TTL = Duration.ofHours(6);
+	private static final int CACHE_MAX_ENTRIES = 500;
+	private static final Set<String> STOPWORDS = Set.of(
+			"de", "del", "la", "las", "el", "los", "y", "e", "o", "en", "a", "al", "por", "para", "con",
+			"un", "una", "sobre", "solicitud", "tramite", "trámite", "and", "or", "not");
+
+	private final Map<String, CachedResult> cache = new ConcurrentHashMap<>();
 
 	private final IntegrationProperties properties;
 	private final RestClient restClient;
@@ -34,64 +49,88 @@ public class IntegrationService {
 	}
 
 	public List<ExternalReferenceResponse> searchBoe(String query) {
-		try {
-			List<ExternalReferenceResponse> parsed = parseBoeLegislation(fetchBoeLegislation(query));
-			if (!parsed.isEmpty()) {
-				return parsed;
+		return cached("boe:" + query, () -> {
+			try {
+				// Title matches are far more relevant than full-text; full-text only as a fallback.
+				List<ExternalReferenceResponse> byTitle = parseBoeLegislation(fetchBoeLegislation(query, true));
+				if (!byTitle.isEmpty()) {
+					return byTitle;
+				}
+				return parseBoeLegislation(fetchBoeLegislation(query, false));
+			} catch (Exception ignored) {
+				return List.of();
 			}
-		} catch (Exception ignored) {
-			// Fall back below when the remote API is unavailable.
-		}
-
-		return demoFallback(
+		}, () -> demoFallback(
 				"BOE",
 				query,
 				"https://www.boe.es/datosabiertos/",
-				"Referencia normativa de ejemplo. Consulte el BOE Datos Abiertos para normativa consolidada.");
+				"Referencia normativa de ejemplo. Consulte el BOE Datos Abiertos para normativa consolidada."));
 	}
 
 	public List<ExternalReferenceResponse> searchDatos(String query) {
-		try {
-			List<ExternalReferenceResponse> parsed = parseDatosCatalog(fetchDatosCatalog(query));
-			if (!parsed.isEmpty()) {
-				return parsed;
+		return cached("datos:" + query, () -> {
+			try {
+				return parseDatosCatalog(fetchDatosCatalog(query));
+			} catch (Exception ignored) {
+				return List.of();
 			}
-		} catch (Exception ignored) {
-			// Fall back below when the remote API is unavailable.
-		}
-
-		return demoFallback(
+		}, () -> demoFallback(
 				"datos.gob.es",
 				query,
 				"https://datos.gob.es/",
-				"Dataset de ejemplo del catálogo de datos abiertos.");
+				"Dataset de ejemplo del catálogo de datos abiertos."));
 	}
 
 	public List<ExternalReferenceResponse> searchSia(String query) {
-		try {
-			List<ExternalReferenceResponse> parsed = parseSiaCatalog(fetchDatosCatalog(query));
-			if (!parsed.isEmpty()) {
-				return parsed;
+		return cached("sia:" + query, () -> {
+			try {
+				return parseSiaCatalog(fetchDatosCatalog(query));
+			} catch (Exception ignored) {
+				return List.of();
 			}
-		} catch (Exception ignored) {
-			// Fall back below when the remote API is unavailable.
-		}
-
-		return List.of(livePagReference(query));
+		}, () -> List.of(livePagReference(query)));
 	}
 
-	String fetchBoeLegislation(String query) {
-		String searchQuery = buildBoeSearchQuery(query);
+	/** Caches live, non-empty results only, so an outage or the demo fallback is never pinned. */
+	private List<ExternalReferenceResponse> cached(
+			String key,
+			Supplier<List<ExternalReferenceResponse>> live,
+			Supplier<List<ExternalReferenceResponse>> fallback) {
+		String normalizedKey = key.toLowerCase(Locale.ROOT).trim();
+		CachedResult hit = cache.get(normalizedKey);
+		if (hit != null && hit.expiresAt().isAfter(Instant.now())) {
+			return hit.results();
+		}
+		List<ExternalReferenceResponse> results = live.get();
+		if (results.isEmpty()) {
+			return fallback.get();
+		}
+		if (cache.size() >= CACHE_MAX_ENTRIES) {
+			cache.clear();
+		}
+		cache.put(normalizedKey, new CachedResult(results, Instant.now().plus(CACHE_TTL)));
+		return results;
+	}
+
+	private record CachedResult(List<ExternalReferenceResponse> results, Instant expiresAt) {}
+
+	String fetchBoeLegislation(String query, boolean titleOnly) {
 		return restClient
 				.get()
-				.uri(UriComponentsBuilder.fromUriString(properties.boeLegislationUrl())
-						.queryParam("limit", MAX_RESULTS)
-						.queryParam("query", searchQuery)
-						.build(true)
-						.toUri())
+				.uri(boeSearchUri(query, titleOnly))
 				.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
 				.retrieve()
 				.body(String.class);
+	}
+
+	URI boeSearchUri(String query, boolean titleOnly) {
+		// The query is raw JSON; it must go through a URI variable so braces and quotes get encoded.
+		return UriComponentsBuilder.fromUriString(properties.boeLegislationUrl())
+				.queryParam("limit", MAX_RESULTS)
+				.queryParam("query", "{query}")
+				.encode()
+				.buildAndExpand(Map.of("query", buildBoeSearchQuery(query, titleOnly)))
+				.toUri();
 	}
 
 	String fetchDatosCatalog(String query) {
@@ -161,7 +200,11 @@ public class IntegrationService {
 
 		try {
 			JsonNode root = objectMapper.readTree(body);
-			JsonNode items = root.path("items");
+			// The linked-data API nests results under "result"; keep the flat shape as a fallback.
+			JsonNode items = root.path("result").path("items");
+			if (!items.isArray()) {
+				items = root.path("items");
+			}
 			if (!items.isArray()) {
 				return List.of();
 			}
@@ -199,11 +242,16 @@ public class IntegrationService {
 		}
 	}
 
-	private ExternalReferenceResponse livePagReference(String query) {
-		String url = UriComponentsBuilder.fromUriString(properties.siaPagSearchUrl())
-				.queryParam("texto", query)
-				.build(true)
+	String siaPagSearchUrl(String query) {
+		return UriComponentsBuilder.fromUriString(properties.siaPagSearchUrl())
+				.queryParam("texto", "{texto}")
+				.encode()
+				.buildAndExpand(Map.of("texto", query))
 				.toUriString();
+	}
+
+	private ExternalReferenceResponse livePagReference(String query) {
+		String url = siaPagSearchUrl(query);
 		return ExternalReferenceResponse.live(
 				"SIA",
 				"pag-tramites-search",
@@ -225,10 +273,17 @@ public class IntegrationService {
 				snippet + " Resultado de ejemplo (demo)."));
 	}
 
-	static String buildBoeSearchQuery(String query) {
-		String sanitized = query.trim().replaceAll("\\s+", " ");
-		String escaped = sanitized.replace("\"", "\\\"");
-		return "{\"query\":{\"query_string\":{\"query\":\"texto:" + escaped + "\"}},"
+	static String buildBoeSearchQuery(String query, boolean titleOnly) {
+		// Letters, digits and spaces only: nothing can break out of the JSON or the query_string syntax.
+		String sanitized = query.replaceAll("[^\\p{L}\\p{N} ]", " ").trim().replaceAll("\\s+", " ");
+		String keywords = Arrays.stream(sanitized.split(" "))
+				.filter(word -> !STOPWORDS.contains(word.toLowerCase(Locale.ROOT)))
+				.collect(Collectors.joining(" "));
+		String terms = keywords.isBlank() ? sanitized : keywords;
+		String condition = titleOnly
+				? "titulo:(" + terms + ") and vigencia_agotada:N"
+				: "texto:(" + terms + ")";
+		return "{\"query\":{\"query_string\":{\"query\":\"" + condition + "\"}},"
 				+ "\"sort\":[{\"fecha_publicacion\":\"desc\"}]}";
 	}
 

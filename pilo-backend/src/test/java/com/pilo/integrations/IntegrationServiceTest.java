@@ -83,8 +83,52 @@ class IntegrationServiceTest {
 	}
 
 	@Test
+	void parsesDatosCatalogNestedUnderResult() {
+		String body =
+				"""
+				{
+				  "format": "linked-data-api",
+				  "result": {
+				    "items": [
+				      {
+				        "_about": "https://datos.gob.es/catalogo/alquiler",
+				        "title": [{"_value": "Condiciones de alquiler", "_lang": "es"}]
+				      }
+				    ]
+				  }
+				}
+				""";
+
+		var results = integrationService.parseDatosCatalog(body);
+
+		assertThat(results).hasSize(1);
+		assertThat(results.get(0).title()).isEqualTo("Condiciones de alquiler");
+	}
+
+	@Test
+	void encodesBoeJsonQueryInUri() {
+		var uri = integrationService.boeSearchUri("contrato \"alquiler\"", true);
+
+		assertThat(uri.getRawQuery()).doesNotContain("{").doesNotContain("\"").doesNotContain(" ");
+		assertThat(uri.getQuery()).contains("titulo:(contrato alquiler) and vigencia_agotada:N");
+	}
+
+	@Test
+	void encodesSiaSearchLinkWithSpaces() {
+		String url = integrationService.siaPagSearchUrl("Solicitud de empadronamiento");
+
+		assertThat(url).endsWith("?texto=Solicitud%20de%20empadronamiento");
+	}
+
+	@Test
 	void buildsBoeSearchQueryFromUserInput() {
-		assertThat(IntegrationService.buildBoeSearchQuery("empadronamiento municipal"))
-				.contains("texto:empadronamiento municipal");
+		assertThat(IntegrationService.buildBoeSearchQuery("Solicitud de empadronamiento municipal", false))
+				.contains("texto:(empadronamiento municipal)");
+	}
+
+	@Test
+	void stripsQuerySyntaxFromUserInput() {
+		assertThat(IntegrationService.buildBoeSearchQuery("alquiler) or titulo:(x", true))
+				.contains("titulo:(alquiler titulo x) and vigencia_agotada:N");
 	}
 }
