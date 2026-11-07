@@ -1,18 +1,1 @@
-version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - corepack enable
-        - pnpm install --frozen-lockfile
-    build:
-      commands:
-        - pnpm build
-  artifacts:
-    baseDirectory: .next
-    files:
-      - "**/*"
-  cache:
-    paths:
-      - node_modules/**/*
-      - .next/cache/**/*
+# Amplify Hosting (monorepo): build spec lives at ../amplify.yml (repository root).

@@ -71,7 +71,7 @@ EC2 tiene que estar **running**. Si apagaste: `./scripts/aws/start-demo.sh`.
 
 1. [Amplify eu-west-1](https://eu-west-1.console.aws.amazon.com/amplify/home?region=eu-west-1) → **Create app** → **GitHub**.
 2. Repo **`Nicolas-12000/Pilo`**, rama `main`.
-3. **Root directory:** `pilo-frontend` · Framework Next.js SSR.
+3. **Root directory:** `pilo-frontend` (monorepo). El build usa **`/amplify.yml`** en la raíz del repo con `applications[].appRoot: pilo-frontend` (sin eso: error *Monorepo spec provided without "applications" key*). · Framework Next.js SSR.
 4. Variable: `NEXT_PUBLIC_ENABLE_DEMO_LOGIN=false`.
 5. **No** pongas `NEXT_PUBLIC_API_URL`.
 
