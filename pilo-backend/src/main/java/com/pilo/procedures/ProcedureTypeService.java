@@ -22,6 +22,7 @@ public class ProcedureTypeService {
 	@Transactional(readOnly = true)
 	public List<ProcedureTypeSummaryResponse> listAll() {
 		return procedureTypeRepository.findAllWithRequirements().stream()
+				.filter(procedureType -> !procedureType.isArchived())
 				.map(ProcedureTypeSummaryResponse::from)
 				.toList();
 	}
@@ -31,6 +32,7 @@ public class ProcedureTypeService {
 	public ProcedureTypeDetailResponse getById(UUID id) {
 		ProcedureType procedureType = procedureTypeRepository
 				.findByIdWithRequirements(id)
+				.filter(found -> !found.isArchived())
 				.orElseThrow(ProcedureTypeNotFoundException::new);
 		return ProcedureTypeDetailResponse.from(procedureType);
 	}

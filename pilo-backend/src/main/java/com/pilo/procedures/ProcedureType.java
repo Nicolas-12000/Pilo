@@ -34,6 +34,9 @@ public class ProcedureType {
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
+	@Column(name = "archived_at")
+	private Instant archivedAt;
+
 	@OneToMany(mappedBy = "procedureType", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Requirement> requirements = new ArrayList<>();
 
@@ -82,6 +85,18 @@ public class ProcedureType {
 
 	public void setCreatedAt(Instant createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Instant getArchivedAt() {
+		return archivedAt;
+	}
+
+	public void setArchivedAt(Instant archivedAt) {
+		this.archivedAt = archivedAt;
+	}
+
+	public boolean isArchived() {
+		return archivedAt != null;
 	}
 
 	public List<Requirement> getRequirements() {

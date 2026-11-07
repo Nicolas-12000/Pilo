@@ -65,7 +65,8 @@ public class ApiExceptionHandler {
 		return switch (code) {
 			case "WORKFLOW_DEFINITION_MISSING" ->
 				"Este trámite aún no tiene un flujo de trabajo configurado.";
-			case "PROCEDURE_TYPE_NOT_FOUND" -> "No hemos encontrado ese trámite.";			case "REQUIREMENT_NOT_FOUND" -> "No hemos encontrado ese requisito.";
+			case "PROCEDURE_TYPE_NOT_FOUND" -> "No hemos encontrado ese trámite.";
+			case "PROCEDURE_TYPE_ARCHIVED" -> "Este trámite ya no admite solicitudes nuevas.";			case "REQUIREMENT_NOT_FOUND" -> "No hemos encontrado ese requisito.";
 			case "REQUIREMENT_MISMATCH" -> "Ese requisito no pertenece a este expediente.";
 			case "EMPTY_FILE" -> "El archivo está vacío.";
 			case "DOCUMENT_NOT_FOUND" -> "No hemos encontrado ese documento.";

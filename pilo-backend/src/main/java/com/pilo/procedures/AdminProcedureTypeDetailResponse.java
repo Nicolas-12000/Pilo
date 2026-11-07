@@ -11,6 +11,7 @@ public record AdminProcedureTypeDetailResponse(
 		String description,
 		int targetDays,
 		boolean hasCases,
+		boolean archived,
 		List<AdminRequirementResponse> requirements) {
 
 	public static AdminProcedureTypeDetailResponse from(
@@ -25,6 +26,7 @@ public record AdminProcedureTypeDetailResponse(
 				procedureType.getDescription(),
 				procedureType.getTargetDays(),
 				hasCases,
+				procedureType.isArchived(),
 				requirements);
 	}
 }

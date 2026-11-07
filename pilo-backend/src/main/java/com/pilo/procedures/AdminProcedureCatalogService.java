@@ -9,6 +9,7 @@ import com.pilo.users.User;
 import com.pilo.users.UserRepository;
 import com.pilo.workflows.WorkflowBlueprints;
 import com.pilo.workflows.WorkflowDefinitionService;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -89,6 +90,19 @@ public class AdminProcedureCatalogService {
 		procedureTypeRepository.save(procedureType);
 
 		audit(actor, "PROCEDURE_TYPE_UPDATED", procedureType.getId(), Map.of("title", procedureType.getTitle()));
+		return getById(id);
+	}
+
+	@CacheEvict(cacheNames = CacheNames.PROCEDURE_CATALOG, allEntries = true)
+	@Transactional
+	public AdminProcedureTypeDetailResponse setArchived(UUID actorId, UUID id, boolean archived) {
+		User actor = requireUser(actorId);
+		ProcedureType procedureType = requireProcedureType(id);
+		if (procedureType.isArchived() != archived) {
+			procedureType.setArchivedAt(archived ? Instant.now() : null);
+			procedureTypeRepository.save(procedureType);
+			audit(actor, archived ? "PROCEDURE_TYPE_ARCHIVED" : "PROCEDURE_TYPE_RESTORED", id, Map.of());
+		}
 		return getById(id);
 	}
 

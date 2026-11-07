@@ -63,6 +63,9 @@ public class CaseService {
 		ProcedureType procedureType = procedureTypeRepository
 				.findByIdWithRequirements(request.procedureTypeId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PROCEDURE_TYPE_NOT_FOUND"));
+		if (procedureType.isArchived()) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "PROCEDURE_TYPE_ARCHIVED");
+		}
 
 		ProcedureCase procedureCase = new ProcedureCase();
 		procedureCase.setCaseNumber(caseNumberGenerator.nextCaseNumber());

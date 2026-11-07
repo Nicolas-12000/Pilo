@@ -2,6 +2,7 @@ package com.pilo.procedures;
 
 import com.pilo.common.AuthSupport;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -49,6 +50,14 @@ public class AdminProcedureTypeController {
 			Authentication authentication) {
 		return adminProcedureCatalogService.update(AuthSupport.userId(authentication), id, request);
 	}
+
+	@PostMapping("/{id}/archived")
+	public AdminProcedureTypeDetailResponse setArchived(
+			@PathVariable UUID id, @Valid @RequestBody SetArchivedRequest request, Authentication authentication) {
+		return adminProcedureCatalogService.setArchived(AuthSupport.userId(authentication), id, request.archived());
+	}
+
+	public record SetArchivedRequest(@NotNull Boolean archived) {}
 
 	@PostMapping("/{id}/requirements")
 	public AdminRequirementResponse addRequirement(
