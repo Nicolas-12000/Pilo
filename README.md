@@ -119,15 +119,9 @@ cd pilo-frontend && pnpm test
 
 ## Repository
 
-This is a **monorepo** (daily development). For academic delivery we also publish **three sibling repos** with history via `git subtree split`:
+Single **monorepo** — source of truth and **only** repo that runs CI (`.github/workflows/ci.yml`).
 
-| Published repo | Module |
-| --- | --- |
-| [pilo-backend](https://github.com/Nicolas-12000/pilo-backend) | `pilo-backend/` |
-| [pilo-frontend](https://github.com/Nicolas-12000/pilo-frontend) | `pilo-frontend/` |
-| [pilo-worker](https://github.com/Nicolas-12000/pilo-worker) | `pilo-worker/` |
-
-How to push updates: `scripts/SPLIT-REPOS.md` and `./scripts/publish-subtree-repos.sh`.
+For grading you may temporarily publish `pilo-backend` / `pilo-frontend` / `pilo-worker` via subtree split (`scripts/SPLIT-REPOS.md`); those copies are disposable after the presentation.
 
 ```
 pilo-backend/    Spring Boot API

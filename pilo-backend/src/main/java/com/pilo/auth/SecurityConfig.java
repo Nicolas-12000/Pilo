@@ -2,6 +2,7 @@ package com.pilo.auth;
 
 import com.pilo.ai.InternalApiKeyFilter;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +32,12 @@ public class SecurityConfig {
 	@Bean
 	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
+	}
+
+	@Bean
+	LoginRateLimiter loginRateLimiter(
+			@Value("${pilo.auth.login-rate-limit.max-attempts:10}") int maxAttempts) {
+		return new LoginRateLimiter(maxAttempts);
 	}
 
 	@Bean

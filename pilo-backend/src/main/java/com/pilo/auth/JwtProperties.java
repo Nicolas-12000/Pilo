@@ -2,15 +2,16 @@ package com.pilo.auth;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.util.StringUtils;
 
 @ConfigurationProperties(prefix = "pilo.jwt")
 public record JwtProperties(
-		String secret, String previousSecret, Duration expiration, String issuer, String audience) {
-
-	public JwtProperties(String secret, Duration expiration) {
-		this(secret, null, expiration, "pilo", "pilo-api");
-	}
+		String secret,
+		@DefaultValue String previousSecret,
+		Duration expiration,
+		@DefaultValue("pilo") String issuer,
+		@DefaultValue("pilo-api") String audience) {
 
 	public JwtProperties {
 		if (!StringUtils.hasText(issuer)) {
@@ -26,5 +27,10 @@ public record JwtProperties(
 
 	public boolean hasPreviousSecret() {
 		return previousSecret != null;
+	}
+
+	/** Short form for unit tests (not used by Spring configuration binding). */
+	public static JwtProperties forTest(String secret, Duration expiration) {
+		return new JwtProperties(secret, null, expiration, "pilo", "pilo-api");
 	}
 }

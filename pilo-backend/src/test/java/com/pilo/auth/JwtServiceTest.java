@@ -18,7 +18,7 @@ class JwtServiceTest {
 
 	@Test
 	void createsTokenWithUserClaims() {
-		JwtService jwtService = new JwtService(new JwtProperties(SECRET, Duration.ofHours(1)));
+		JwtService jwtService = new JwtService(JwtProperties.forTest(SECRET, Duration.ofHours(1)));
 		User user = user("ana@pilo.test", Role.USER);
 
 		String token = jwtService.createAccessToken(user);
@@ -32,7 +32,7 @@ class JwtServiceTest {
 
 	@Test
 	void rejectsExpiredToken() throws InterruptedException {
-		JwtService jwtService = new JwtService(new JwtProperties(SECRET, Duration.ofMillis(1)));
+		JwtService jwtService = new JwtService(JwtProperties.forTest(SECRET, Duration.ofMillis(1)));
 		String token = jwtService.createAccessToken(user("ana@pilo.test", Role.ADMIN));
 
 		Thread.sleep(20);
@@ -42,7 +42,7 @@ class JwtServiceTest {
 
 	@Test
 	void rejectsTamperedToken() {
-		JwtService jwtService = new JwtService(new JwtProperties(SECRET, Duration.ofHours(1)));
+		JwtService jwtService = new JwtService(JwtProperties.forTest(SECRET, Duration.ofHours(1)));
 		String token = jwtService.createAccessToken(user("ana@pilo.test", Role.REVIEWER));
 
 		assertThatThrownBy(() -> jwtService.parse(token + "x")).isInstanceOf(JwtException.class);
@@ -50,7 +50,7 @@ class JwtServiceTest {
 
 	@Test
 	void acceptsTokenSignedWithPreviousSecretDuringRotation() {
-		JwtService oldIssuer = new JwtService(new JwtProperties(PREVIOUS, Duration.ofHours(1)));
+		JwtService oldIssuer = new JwtService(JwtProperties.forTest(PREVIOUS, Duration.ofHours(1)));
 		String token = oldIssuer.createAccessToken(user("ana@pilo.test", Role.USER));
 
 		JwtService rotated = new JwtService(
@@ -62,10 +62,10 @@ class JwtServiceTest {
 
 	@Test
 	void rejectsPreviousSecretAfterItIsDropped() {
-		JwtService oldIssuer = new JwtService(new JwtProperties(PREVIOUS, Duration.ofHours(1)));
+		JwtService oldIssuer = new JwtService(JwtProperties.forTest(PREVIOUS, Duration.ofHours(1)));
 		String token = oldIssuer.createAccessToken(user("ana@pilo.test", Role.USER));
 
-		JwtService rotated = new JwtService(new JwtProperties(SECRET, Duration.ofHours(1)));
+		JwtService rotated = new JwtService(JwtProperties.forTest(SECRET, Duration.ofHours(1)));
 
 		assertThatThrownBy(() -> rotated.parse(token)).isInstanceOf(JwtException.class);
 	}

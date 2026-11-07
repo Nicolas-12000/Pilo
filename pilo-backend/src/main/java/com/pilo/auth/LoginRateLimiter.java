@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 /**
  * In-memory sliding-window limiter for the login endpoint, keyed by client IP.
@@ -14,21 +13,21 @@ import org.springframework.stereotype.Component;
  * IPs too harshly. Single-instance only: a clustered deployment should move this to a shared
  * store (e.g. Redis) instead.
  */
-@Component
 public class LoginRateLimiter {
 
-	private static final int MAX_ATTEMPTS = 10;
 	private static final Duration WINDOW = Duration.ofMinutes(5);
 
 	private final Clock clock;
+	private final int maxAttempts;
 	private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
 
-	public LoginRateLimiter() {
-		this(Clock.systemUTC());
+	public LoginRateLimiter(int maxAttempts) {
+		this(Clock.systemUTC(), maxAttempts);
 	}
 
-	LoginRateLimiter(Clock clock) {
+	LoginRateLimiter(Clock clock, int maxAttempts) {
 		this.clock = clock;
+		this.maxAttempts = maxAttempts;
 	}
 
 	public boolean tryAcquire(String key) {
@@ -39,7 +38,7 @@ public class LoginRateLimiter {
 			}
 			return existing;
 		});
-		return bucket.attempts.incrementAndGet() <= MAX_ATTEMPTS;
+		return bucket.attempts.incrementAndGet() <= maxAttempts;
 	}
 
 	@Scheduled(fixedRate = 10, timeUnit = java.util.concurrent.TimeUnit.MINUTES)

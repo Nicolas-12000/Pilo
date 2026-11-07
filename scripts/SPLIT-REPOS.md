@@ -1,6 +1,10 @@
-# Publicar 3 repos desde el monorepo
+# Publicar 3 repos desde el monorepo (temporal)
 
-Desarrollo en **[Pilo](https://github.com/Nicolas-12000/Pilo)** (monorepo). Para la entrega académica (mín. 2 repos; aquí **3**):
+**Canónico:** solo **[Pilo](https://github.com/Nicolas-12000/Pilo)** — ahí vive el CI y seguís desarrollando.
+
+Los repos hijos son para cumplir “mínimo 2 repos” en la defensa; después podés **borrarlos en GitHub** sin perder nada (el monorepo queda).
+
+Para la entrega académica (mín. 2 repos; aquí **3**):
 
 | Repo público | Carpeta en monorepo | Contenido |
 |--------------|---------------------|-----------|
@@ -69,5 +73,6 @@ Mismo comando: `./scripts/publish-subtree-repos.sh` (vuelve a hacer split y push
 
 ## Notas
 
-- CI del monorepo (`.github/workflows/ci.yml`) **no** viaja al split; cada repo hijo solo trae lo de su carpeta. Si el profe pide Actions en cada repo, añade un workflow dentro de `pilo-backend/`, `pilo-frontend/` o `pilo-worker/` en el monorepo y repite el publish.
-- `docker-compose.ec2.yml` vive en la raíz del monorepo; no está en el repo del backend solo (puedes copiarlo al README del backend o dejarlo en el monorepo).
+- **No configures CI en los repos hijos** — el workflow del monorepo usa `working-directory: pilo-backend|pilo-frontend` y no aplica allí. Mostrá el badge verde del repo **Pilo**.
+- Tras presentar: Settings → Delete repository en los hijos (opcional).
+- `docker-compose.ec2.yml` solo está en el monorepo.
