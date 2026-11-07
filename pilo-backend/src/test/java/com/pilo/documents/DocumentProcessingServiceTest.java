@@ -53,6 +53,9 @@ class DocumentProcessingServiceTest {
 	@Mock
 	private AuditService auditService;
 
+	@Mock
+	private DocumentGuidanceService documentGuidanceService;
+
 	private DocumentProcessingService service;
 	private final UUID documentId = UUID.randomUUID();
 
@@ -66,7 +69,8 @@ class DocumentProcessingServiceTest {
 				documentValidationService,
 				validationRulesParser,
 				workflowService,
-				auditService);
+				auditService,
+				documentGuidanceService);
 	}
 
 	@Test
@@ -111,6 +115,8 @@ class DocumentProcessingServiceTest {
 		when(documentRepository.findForProcessing(documentId)).thenReturn(Optional.of(document));
 		when(documentExtractionRepository.existsByDocument_Id(documentId)).thenReturn(false);
 		when(documentValidationService.validate(any(), any())).thenReturn(new ValidationResult(true, List.of()));
+		when(documentGuidanceService.build(any(), any(), any()))
+				.thenReturn(new DocumentGuidanceService.DocumentGuidance("ok", "ok"));
 
 		service.applyExtraction(
 				documentId, new StructuredExtraction("identity_document", 0.9, "{\"name\":\"Ana\"}"));

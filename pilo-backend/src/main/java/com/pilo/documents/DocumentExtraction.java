@@ -40,6 +40,12 @@ public class DocumentExtraction {
 	@Column(name = "processed_at", nullable = false)
 	private Instant processedAt;
 
+	@Column(name = "citizen_guidance", columnDefinition = "text")
+	private String citizenGuidance;
+
+	@Column(name = "reviewer_summary", columnDefinition = "text")
+	private String reviewerSummary;
+
 	@PrePersist
 	void onCreate() {
 		if (processedAt == null) {
@@ -85,5 +91,21 @@ public class DocumentExtraction {
 
 	public Instant getProcessedAt() {
 		return processedAt;
+	}
+
+	public String getCitizenGuidance() {
+		return citizenGuidance;
+	}
+
+	public void setCitizenGuidance(String citizenGuidance) {
+		this.citizenGuidance = citizenGuidance;
+	}
+
+	public String getReviewerSummary() {
+		return reviewerSummary;
+	}
+
+	public void setReviewerSummary(String reviewerSummary) {
+		this.reviewerSummary = reviewerSummary;
 	}
 }

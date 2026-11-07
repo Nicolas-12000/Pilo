@@ -22,16 +22,19 @@ public class DocumentPresentationService {
 	private final DocumentValidationService documentValidationService;
 	private final AuditEventRepository auditEventRepository;
 	private final ObjectMapper objectMapper;
+	private final DocumentGuidanceService documentGuidanceService;
 
 	public DocumentPresentationService(
 			DocumentExtractionRepository documentExtractionRepository,
 			DocumentValidationService documentValidationService,
 			AuditEventRepository auditEventRepository,
-			ObjectMapper objectMapper) {
+			ObjectMapper objectMapper,
+			DocumentGuidanceService documentGuidanceService) {
 		this.documentExtractionRepository = documentExtractionRepository;
 		this.documentValidationService = documentValidationService;
 		this.auditEventRepository = auditEventRepository;
 		this.objectMapper = objectMapper;
+		this.documentGuidanceService = documentGuidanceService;
 	}
 
 	public List<DocumentResponse> present(List<Document> documents) {
@@ -64,11 +67,26 @@ public class DocumentPresentationService {
 	}
 
 	private DocumentExtractionResponse toExtractionResponse(DocumentExtraction extraction) {
+		String citizenGuidance = extraction.getCitizenGuidance();
+		String reviewerSummary = extraction.getReviewerSummary();
+		if (citizenGuidance == null || reviewerSummary == null) {
+			Document document = extraction.getDocument();
+			StructuredExtraction structured = new StructuredExtraction(
+					extraction.getDocumentTypeDetected(),
+					extraction.getConfidence(),
+					extraction.getExtractedData());
+			var validation = documentValidationService.validate(structured, document.getRequirement());
+			var guidance = documentGuidanceService.build(document.getRequirement(), structured, validation);
+			citizenGuidance = citizenGuidance == null ? guidance.citizenGuidance() : citizenGuidance;
+			reviewerSummary = reviewerSummary == null ? guidance.reviewerSummary() : reviewerSummary;
+		}
 		return new DocumentExtractionResponse(
 				extraction.getDocumentTypeDetected(),
 				extraction.getConfidence(),
 				parseFields(extraction.getExtractedData()),
-				extraction.getProcessedAt());
+				extraction.getProcessedAt(),
+				citizenGuidance,
+				reviewerSummary);
 	}
 
 	private Map<String, String> parseFields(String extractedData) {

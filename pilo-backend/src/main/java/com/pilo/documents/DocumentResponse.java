@@ -1,5 +1,6 @@
 package com.pilo.documents;
 
+import com.pilo.documents.validation.ValidationFailureMessages;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,7 +13,7 @@ public record DocumentResponse(
 		long fileSize,
 		DocumentStatus status,
 		DocumentExtractionResponse extraction,
-		List<String> validationFailures,
+		List<ValidationFailureMessages.Message> validationFailures,
 		String processingFailureReason) {
 
 	public static DocumentResponse from(Document document) {
@@ -24,6 +25,7 @@ public record DocumentResponse(
 			DocumentExtractionResponse extraction,
 			List<String> validationFailures,
 			String processingFailureReason) {
+		List<ValidationFailureMessages.Message> messages = ValidationFailureMessages.ofAll(validationFailures);
 		return new DocumentResponse(
 				document.getId(),
 				document.getRequirement().getId(),
@@ -33,7 +35,7 @@ public record DocumentResponse(
 				document.getFileSize(),
 				document.getStatus(),
 				extraction,
-				validationFailures == null ? List.of() : List.copyOf(validationFailures),
+				messages,
 				processingFailureReason);
 	}
 }

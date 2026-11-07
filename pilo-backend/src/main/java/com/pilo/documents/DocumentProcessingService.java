@@ -34,6 +34,7 @@ public class DocumentProcessingService {
 	private final ValidationRulesParser validationRulesParser;
 	private final WorkflowService workflowService;
 	private final AuditService auditService;
+	private final DocumentGuidanceService documentGuidanceService;
 
 	public DocumentProcessingService(
 			DocumentRepository documentRepository,
@@ -43,7 +44,8 @@ public class DocumentProcessingService {
 			DocumentValidationService documentValidationService,
 			ValidationRulesParser validationRulesParser,
 			WorkflowService workflowService,
-			AuditService auditService) {
+			AuditService auditService,
+			DocumentGuidanceService documentGuidanceService) {
 		this.documentRepository = documentRepository;
 		this.documentExtractionRepository = documentExtractionRepository;
 		this.objectStorage = objectStorage;
@@ -52,6 +54,7 @@ public class DocumentProcessingService {
 		this.validationRulesParser = validationRulesParser;
 		this.workflowService = workflowService;
 		this.auditService = auditService;
+		this.documentGuidanceService = documentGuidanceService;
 	}
 
 	public void process(UUID documentId) {
@@ -135,18 +138,21 @@ public class DocumentProcessingService {
 			return;
 		}
 
+		var validation = documentValidationService.validate(extraction, document.getRequirement());
+		var guidance = documentGuidanceService.build(document.getRequirement(), extraction, validation);
+
 		try {
 			DocumentExtraction stored = new DocumentExtraction();
 			stored.setDocument(document);
 			stored.setDocumentTypeDetected(extraction.documentType());
 			stored.setConfidence(extraction.confidence());
 			stored.setExtractedData(extraction.extractedFieldsJson());
+			stored.setCitizenGuidance(guidance.citizenGuidance());
+			stored.setReviewerSummary(guidance.reviewerSummary());
 			documentExtractionRepository.save(stored);
 		} catch (DataIntegrityViolationException duplicate) {
 			return;
 		}
-
-		var validation = documentValidationService.validate(extraction, document.getRequirement());
 		document.setStatus(validation.valid() ? DocumentStatus.VALIDATED : DocumentStatus.REJECTED);
 		document.setLastError(null);
 		documentRepository.save(document);
