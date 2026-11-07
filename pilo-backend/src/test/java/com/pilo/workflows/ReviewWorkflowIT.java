@@ -2,6 +2,7 @@ package com.pilo.workflows;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.pilo.audit.AuditEventRepository;
 import com.pilo.cases.CaseService;
 import com.pilo.cases.CaseStatus;
 import com.pilo.cases.CreateCaseRequest;
@@ -49,6 +50,9 @@ class ReviewWorkflowIT extends AbstractIntegrationTest {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private AuditEventRepository auditEventRepository;
+
 	@Test
 	void completingFinalReviewApprovesCase() {
 		User citizen = persistUser("citizen@pilo.test", Role.USER);
@@ -88,6 +92,44 @@ class ReviewWorkflowIT extends AbstractIntegrationTest {
 						.orElseThrow()
 						.status())
 				.isEqualTo(WorkflowTaskStatus.COMPLETED);
+	}
+
+	@Test
+	void rejectedMandatoryDocumentStillAllowsHumanApproval() {
+		User citizen = persistUser("citizen-ai@pilo.test", Role.USER);
+		User reviewer = persistUser("reviewer-ai@pilo.test", Role.REVIEWER);
+		ProcedureType procedureType = persistProcedureType();
+		workflowDefinitionService.attach(procedureType, WorkflowBlueprints.documentCollectionReview());
+
+		UUID caseId = caseService.createCase(citizen.getId(), new CreateCaseRequest(procedureType.getId())).id();
+		Requirement requirement = procedureType.getRequirements().getFirst();
+
+		Document document = new Document();
+		document.setProcedureCase(procedureCaseRepository.findDetailedById(caseId).orElseThrow());
+		document.setRequirement(requirement);
+		document.setFileName("identity.pdf");
+		document.setMimeType("application/pdf");
+		document.setFileSize(1024);
+		document.setStorageKey("demo/identity-rejected.pdf");
+		document.setStatus(DocumentStatus.REJECTED);
+		documentRepository.save(document);
+
+		workflowService.reevaluate(caseId);
+
+		assertThat(procedureCaseRepository.findDetailedById(caseId).orElseThrow().getStatus())
+				.isEqualTo(CaseStatus.UNDER_REVIEW);
+
+		workflowService.completeFinalReview(
+				caseId,
+				reviewer.getId(),
+				Role.REVIEWER,
+				new FinalReviewRequest(
+						FinalReviewRequest.Decision.APPROVED, "Documento válido pese al rechazo automático"));
+
+		assertThat(procedureCaseRepository.findDetailedById(caseId).orElseThrow().getStatus())
+				.isEqualTo(CaseStatus.APPROVED);
+		assertThat(auditEventRepository.findByResourcePrefix("case:" + caseId).getFirst().getMetadata())
+				.contains("aiDisagreement");
 	}
 
 	private User persistUser(String email, Role role) {

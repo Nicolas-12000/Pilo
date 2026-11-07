@@ -32,8 +32,16 @@ import org.springframework.web.server.ResponseStatusException;
 @Validated
 public class WorkflowService {
 
-	private static final Set<DocumentStatus> PRESENT_STATUSES =
-			EnumSet.of(DocumentStatus.UPLOADED, DocumentStatus.PROCESSING, DocumentStatus.VALIDATED);
+	private static final Set<DocumentStatus> PRESENT_STATUSES = EnumSet.of(
+			DocumentStatus.UPLOADED,
+			DocumentStatus.PROCESSING,
+			DocumentStatus.VALIDATED,
+			DocumentStatus.REJECTED,
+			DocumentStatus.PROCESSING_FAILED);
+	private static final Set<DocumentStatus> REVIEW_READY_STATUSES = EnumSet.of(
+			DocumentStatus.VALIDATED,
+			DocumentStatus.REJECTED,
+			DocumentStatus.PROCESSING_FAILED);
 
 	private final WorkflowTaskRepository workflowTaskRepository;
 	private final CaseAccessService caseAccessService;
@@ -100,10 +108,17 @@ public class WorkflowService {
 		workflowTaskRepository.save(finalReview);
 		procedureCaseRepository.save(procedureCase);
 
+		List<Document> documents = documentRepository.findByCaseId(caseId);
+		boolean aiDisagreement =
+				request.decision() == FinalReviewRequest.Decision.APPROVED && hasAiDisagreement(documents);
+
 		Map<String, Object> metadata = new java.util.HashMap<>();
 		metadata.put("decision", request.decision().name());
 		if (request.comment() != null && !request.comment().isBlank()) {
 			metadata.put("comment", request.comment().trim());
+		}
+		if (aiDisagreement) {
+			metadata.put("aiDisagreement", true);
 		}
 
 		auditService.record(
@@ -129,8 +144,8 @@ public class WorkflowService {
 				.toList();
 
 		boolean allMandatoryPresent = allMandatoryMatch(mandatoryRequirements, documents, PRESENT_STATUSES);
-		boolean allMandatoryValidated =
-				allMandatoryMatch(mandatoryRequirements, documents, EnumSet.of(DocumentStatus.VALIDATED));
+		boolean allMandatoryReadyForReview =
+				allMandatoryMatch(mandatoryRequirements, documents, REVIEW_READY_STATUSES);
 		long validatedMandatory = mandatoryRequirements.stream()
 				.filter(requirement -> hasStatus(requirement.getId(), documents, EnumSet.of(DocumentStatus.VALIDATED)))
 				.count();
@@ -156,10 +171,10 @@ public class WorkflowService {
 				continue;
 			}
 
-			task.setStatus(statusFor(task, allMandatoryPresent, allMandatoryValidated));
+			task.setStatus(statusFor(task, allMandatoryPresent, allMandatoryReadyForReview));
 		}
 
-		if (allMandatoryValidated && !mandatoryRequirements.isEmpty()) {
+		if (allMandatoryReadyForReview && !mandatoryRequirements.isEmpty()) {
 			procedureCase.setStatus(CaseStatus.UNDER_REVIEW);
 		}
 
@@ -214,5 +229,12 @@ public class WorkflowService {
 		return documents.stream()
 				.anyMatch(document -> document.getRequirement().getId().equals(requirementId)
 						&& statuses.contains(document.getStatus()));
+	}
+
+	private static boolean hasAiDisagreement(List<Document> documents) {
+		return documents.stream()
+				.anyMatch(document -> document.getRequirement().isMandatory()
+						&& (document.getStatus() == DocumentStatus.REJECTED
+								|| document.getStatus() == DocumentStatus.PROCESSING_FAILED));
 	}
 }
