@@ -17,6 +17,8 @@ applications:
             - pnpm install --frozen-lockfile
         build:
           commands:
+            # Amplify SSR compute only sees runtime vars written to .env.production at build time.
+            - echo "PILO_BACKEND_ORIGIN=$PILO_BACKEND_ORIGIN" >> .env.production
             - pnpm build
       artifacts:
         baseDirectory: .next

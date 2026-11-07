@@ -4,7 +4,7 @@ import { getSiteUrl } from "@/lib/site";
 export const SITE_NAME = "PILO";
 
 const DEFAULT_DESCRIPTION =
-  "Explora trámites administrativos, requisitos y plazos. Abre un expediente, sube documentos y sigue la validación con apoyo de IA.";
+  "Explora trámites administrativos, requisitos y plazos. Abre un expediente, sube documentos y sigue la validación y la revisión en un solo sitio.";
 
 export const rootMetadata: Metadata = {
   title: {

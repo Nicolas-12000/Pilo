@@ -43,7 +43,7 @@ export function ProceduresPanel({ initialProcedures }: ProceduresPanelProps) {
             description={
               error instanceof ApiError && error.status < 500
                 ? error.message
-                : "Comprueba que el backend esté en marcha en localhost:8080."
+                : "El servicio no responde ahora mismo. Inténtalo de nuevo en unos segundos."
             }
           />
         ) : data && data.length > 0 ? (
@@ -58,7 +58,7 @@ export function ProceduresPanel({ initialProcedures }: ProceduresPanelProps) {
           <EmptyState
             icon={Landmark}
             title="Todavía no hay trámites publicados"
-            description="Arranca el backend con el perfil local para cargar los datos de ejemplo."
+            description="Cuando la administración publique uno, aparecerá aquí."
           />
         )}
       </div>

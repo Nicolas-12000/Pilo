@@ -26,7 +26,8 @@ async function readApiError(response: Response) {
 // window across requests/users, cutting load on the backend without risking stale per-user data.
 export async function listProcedureTypes(): Promise<ProcedureTypeSummary[]> {
   if (isNextProductionBuild()) {
-    return [];
+    // Throw instead of returning []: an empty list would be baked into the ISR page as initialData.
+    throw new ApiError("Build sin API", 503);
   }
   const response = await fetch(`${getApiUrl()}/api/v1/procedures/types`, {
     next: { revalidate: 60 },

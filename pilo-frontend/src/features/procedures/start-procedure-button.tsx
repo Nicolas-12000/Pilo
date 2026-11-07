@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, LogIn, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -70,7 +70,7 @@ export function StartProcedureButton({
         {loading ? (
           <Loader2 size={20} strokeWidth={1.75} className="animate-spin" />
         ) : (
-          <Sparkles size={20} strokeWidth={1.75} />
+          <ArrowRight size={20} strokeWidth={1.75} />
         )}
         {loading ? "Creando expediente…" : "Iniciar trámite"}
       </Button>
