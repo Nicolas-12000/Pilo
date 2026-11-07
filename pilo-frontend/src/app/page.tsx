@@ -1,10 +1,14 @@
+import type { Metadata } from "next";
 import { Sparkles } from "lucide-react";
+import { homeMetadata } from "@/lib/seo";
 import { PageContainer } from "@/components/layout/page-container";
 import { PrefetchCatalog } from "@/components/pilo/prefetch-catalog";
 import { ButtonLink } from "@/components/ui/button";
 import { AccessPaths } from "@/features/home/access-paths";
 import { HowItWorks } from "@/features/home/how-it-works";
 import { routes } from "@/lib/routes";
+
+export const metadata: Metadata = homeMetadata();
 
 export default function Home() {
   return (

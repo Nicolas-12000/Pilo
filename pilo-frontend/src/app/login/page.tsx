@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { LoginPanel } from "@/features/auth/login-panel";
+import { privatePageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = privatePageMetadata("Iniciar sesión");
 
 export default function LoginPage() {
   return (

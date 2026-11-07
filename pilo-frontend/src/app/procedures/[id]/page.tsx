@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { CalendarClock, FileText } from "lucide-react";
 import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
@@ -7,12 +8,31 @@ import { RequirementList } from "@/features/procedures/requirement-list";
 import { StartProcedureButton } from "@/features/procedures/start-procedure-button";
 import { ApiError, getProcedureType } from "@/lib/api/procedures";
 import { routes } from "@/lib/routes";
+import { procedureDetailMetadata } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type ProcedureDetailPageProps = {
   params: Promise<{ id: string }>;
 };
+
+export async function generateMetadata({ params }: ProcedureDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const procedure = await getProcedureType(id);
+    return procedureDetailMetadata({
+      id: procedure.id,
+      title: procedure.title,
+      description: procedure.description,
+      targetDays: procedure.targetDays,
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return { title: "Trámite no encontrado" };
+    }
+    return { title: "Trámite" };
+  }
+}
 
 export default async function ProcedureDetailPage({ params }: ProcedureDetailPageProps) {
   const { id } = await params;

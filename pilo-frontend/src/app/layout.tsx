@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { AppShell } from "@/components/layout/app-shell";
 import { AppProviders } from "@/components/providers/app-providers";
+import { rootMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -22,10 +22,7 @@ const jetBrainsMono = JetBrains_Mono({
   weight: ["500"],
 });
 
-export const metadata: Metadata = {
-  title: "PILO · Trámites administrativos",
-  description: "Plataforma para gestionar trámites administrativos con apoyo de IA.",
-};
+export const metadata = rootMetadata;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

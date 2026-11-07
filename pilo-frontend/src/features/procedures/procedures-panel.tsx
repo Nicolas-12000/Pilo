@@ -9,12 +9,19 @@ import { SkeletonList } from "@/components/ui/skeleton";
 import { ProcedureCard } from "@/features/procedures/procedure-card";
 import { ApiError, listProcedureTypes } from "@/lib/api/procedures";
 import { procedureKeys } from "@/lib/api/queries";
+import type { ProcedureTypeSummary } from "@/lib/api/types";
 
-export function ProceduresPanel() {
+type ProceduresPanelProps = {
+  /** Server-fetched catalog (ISR); avoids an empty first paint when the API is up. */
+  initialProcedures?: ProcedureTypeSummary[];
+};
+
+export function ProceduresPanel({ initialProcedures }: ProceduresPanelProps) {
   const { data, isPending, error } = useQuery({
     queryKey: procedureKeys.list(),
     queryFn: listProcedureTypes,
     staleTime: 60_000,
+    initialData: initialProcedures,
   });
 
   return (

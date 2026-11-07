@@ -1,0 +1,13 @@
+aws_region  = "eu-west-1"
+ssh_cidr    = "TU.IP.PUBLICA/32"
+github_repo = "Nicolas-12000/Pilo"
+
+# Generá con: openssl rand -base64 32
+pilo_jwt_secret         = "CHANGE_ME"
+pilo_internal_api_key   = "CHANGE_ME"
+db_password             = "CHANGE_ME_STRONG"
+
+# Cuando tengas Amplify:
+# pilo_cors_origins = "https://main.xxxxx.amplifyapp.com"
+
+pilo_seed_enabled = true
