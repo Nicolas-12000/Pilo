@@ -9,7 +9,7 @@ import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils/cn";
 
 export function CaseCard({ caseItem }: { caseItem: CaseSummary }) {
-  const deadline = describeDeadline(caseItem.deadlineAt);
+  const deadline = describeDeadline(caseItem.deadlineAt, caseItem.status);
 
   return (
     <Link

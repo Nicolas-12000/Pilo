@@ -65,7 +65,8 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
   }
 
   const { detail, workflow, documents } = data;
-  const deadline = describeDeadline(detail.deadlineAt);
+  const deadline = describeDeadline(detail.deadlineAt, detail.status);
+  const awaitingCitizen = detail.status === "PENDING" || detail.status === "IN_PROGRESS";
   const grouped = documentsByRequirement(documents);
   const processing = hasWorkInProgress(data);
   const canReview = user?.role === "REVIEWER" || user?.role === "ADMIN";
@@ -90,6 +91,32 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
             canReview={canReview}
             onReviewed={() => void refetch()}
           />
+
+          {awaitingCitizen && (deadline.urgent || deadline.overdue) ? (
+            <div
+              role="status"
+              className={cn(
+                "flex items-start gap-sm rounded-lg p-md",
+                deadline.overdue
+                  ? "bg-danger-container text-on-danger-container"
+                  : "bg-warning-container text-on-warning-container",
+              )}
+            >
+              <CalendarClock size={20} strokeWidth={1.75} className="mt-0.5 shrink-0" />
+              <div>
+                <p className="font-label">
+                  {deadline.overdue
+                    ? `El plazo objetivo venció el ${formatDate(detail.deadlineAt)}`
+                    : deadline.daysLeft === 0
+                      ? "El plazo objetivo vence hoy"
+                      : `Quedan ${deadline.daysLeft} ${deadline.daysLeft === 1 ? "día" : "días"} para completar la documentación`}
+                </p>
+                <p className="mt-1 text-body-sm">
+                  Sube los documentos pendientes para que el expediente pase a revisión.
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-sm">

@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, format, formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
+import type { CaseStatus } from "@/lib/api/types";
 
 export function formatDate(value: string) {
   return format(new Date(value), "d MMM yyyy", { locale: es });
@@ -18,24 +19,38 @@ export type DeadlineInfo = {
   daysLeft: number;
   urgent: boolean;
   overdue: boolean;
+  closed: boolean;
 };
 
-export function describeDeadline(value: string): DeadlineInfo {
-  const daysLeft = differenceInCalendarDays(new Date(value), new Date());
+const CLOSED_STATUSES: ReadonlySet<CaseStatus> = new Set(["APPROVED", "REJECTED"]);
+
+export function describeDeadline(value: string, status?: CaseStatus, now = new Date()): DeadlineInfo {
+  const daysLeft = differenceInCalendarDays(new Date(value), now);
+  if (status && CLOSED_STATUSES.has(status)) {
+    return { label: "Expediente cerrado", daysLeft, urgent: false, overdue: false, closed: true };
+  }
   const overdue = daysLeft < 0;
   const urgent = !overdue && daysLeft <= 3;
 
   if (overdue) {
-    return { label: `Vencido ${formatRelative(value)}`, daysLeft, urgent: false, overdue };
+    const daysAgo = -daysLeft;
+    return {
+      label: `Vencido hace ${daysAgo} ${daysAgo === 1 ? "día" : "días"}`,
+      daysLeft,
+      urgent: false,
+      overdue,
+      closed: false,
+    };
   }
   if (daysLeft === 0) {
-    return { label: "Vence hoy", daysLeft, urgent: true, overdue };
+    return { label: "Vence hoy", daysLeft, urgent: true, overdue, closed: false };
   }
   return {
-    label: `${daysLeft} ${daysLeft === 1 ? "día" : "días"} restantes`,
+    label: daysLeft === 1 ? "1 día restante" : `${daysLeft} días restantes`,
     daysLeft,
     urgent,
     overdue,
+    closed: false,
   };
 }
 
