@@ -60,6 +60,19 @@ En el repo hay:
 
 Luego en GitHub → **Actions**: habilitá workflows si te lo pide.
 
+**Si falla OIDC** (`Not authorized to perform sts:AssumeRoleWithWebIdentity`):
+
+1. GitHub → repo **`Nicolas-12000/Pilo`** → **Settings → Actions → General → Workflow permissions** → **Read and write permissions** (y guardá).
+2. En la run fallida, confirmá que el repositorio es **`Nicolas-12000/Pilo`** (no un fork ni `pilo-frontend`).
+3. En tu máquina (perfil AWS con acceso a la cuenta demo):
+
+   ```bash
+   ./scripts/aws/fix-github-oidc.sh
+   ```
+
+   Refresca la trust del rol `pilo-github-actions` (solo `aud` + `sub`, formato legacy e inmutable de GitHub).
+4. **Re-run** del workflow **deploy-aws** (o un push que toque `pilo-backend/**`).
+
 | Push modifica… | Qué despliega |
 |----------------|---------------|
 | `pilo-backend/**` | SSM → `pilo-update.sh` en EC2 (rebuild compose) |

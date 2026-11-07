@@ -29,6 +29,9 @@ jobs:
   worker:
     if: github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'worker'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     defaults:
       run:
         working-directory: pilo-worker
@@ -41,6 +44,7 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
       - name: Build zip and update Lambda
         run: |
           chmod +x scripts/build.sh
@@ -52,12 +56,16 @@ jobs:
   backend:
     if: github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'backend'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
       - name: Rebuild backend on EC2 via SSM
         run: |
           set -euo pipefail

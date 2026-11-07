@@ -223,7 +223,7 @@ GITHUB_REPO_NAME="${GITHUB_REPO_NAME:-Pilo}"
 GITHUB_OWNER_ID="${GITHUB_OWNER_ID:-190977331}"
 GITHUB_REPO_ID="${GITHUB_REPO_ID:-1344265257}"
 GH_TRUST=$(cat <<EOF
-{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${OIDC_ARN}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"token.actions.githubusercontent.com:aud":"sts.amazonaws.com","token.actions.githubusercontent.com:repository_owner":"${GITHUB_OWNER}","token.actions.githubusercontent.com:repository":"${GITHUB_OWNER}/${GITHUB_REPO_NAME}"},"StringLike":{"token.actions.githubusercontent.com:sub":["repo:${GITHUB_REPO}:*","repo:${GITHUB_OWNER}@${GITHUB_OWNER_ID}/${GITHUB_REPO_NAME}@${GITHUB_REPO_ID}:*"]}}}]}
+{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${OIDC_ARN}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"token.actions.githubusercontent.com:aud":"sts.amazonaws.com"},"StringLike":{"token.actions.githubusercontent.com:sub":["repo:${GITHUB_REPO}:*","repo:${GITHUB_OWNER}@${GITHUB_OWNER_ID}/${GITHUB_REPO_NAME}@${GITHUB_REPO_ID}:*"]}}}]}
 EOF
 )
 if aws iam get-role --role-name "$OIDC_ROLE" >/dev/null 2>&1; then
