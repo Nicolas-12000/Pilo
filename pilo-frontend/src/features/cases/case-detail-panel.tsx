@@ -18,6 +18,7 @@ import { useSession } from "@/lib/auth/use-session";
 import { describeDeadline, formatDate } from "@/lib/cases/dates";
 import { caseStatus } from "@/lib/cases/status";
 import { ExternalReferences } from "@/features/cases/external-references";
+import { CaseGuidanceCard } from "@/features/cases/case-guidance-card";
 import { FinalReviewActions } from "@/features/cases/final-review-actions";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils/cn";
@@ -72,6 +73,8 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
   const canReview = user?.role === "REVIEWER" || user?.role === "ADMIN";
   const caseOpen = detail.status !== "APPROVED" && detail.status !== "REJECTED";
   const allowDocumentDelete = caseOpen && user?.role !== "REVIEWER";
+  const documentAudience = canReview ? "reviewer" : "citizen";
+  const caseGuidanceBody = canReview ? detail.guidanceReviewer : detail.guidanceCitizen;
 
   return (
     <>
@@ -87,9 +90,16 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
 
       <div className="mt-xl grid gap-lg lg:grid-cols-[1fr_296px] lg:items-start">
         <div className="flex flex-col gap-lg">
+          <CaseGuidanceCard
+            title={canReview ? "Resumen para revisión" : "Resumen de tu expediente"}
+            body={caseGuidanceBody ?? ""}
+            variant={canReview ? "reviewer" : "default"}
+          />
+
           <FinalReviewActions
             caseId={caseId}
             detail={detail}
+            documents={documents}
             canReview={canReview}
             onReviewed={() => void refetch()}
           />
@@ -146,6 +156,7 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
                   requirement={requirement}
                   documents={grouped[requirement.id] ?? []}
                   allowDocumentDelete={allowDocumentDelete}
+                  documentAudience={documentAudience}
                   onUploaded={() => void refetch()}
                 />
               ))}

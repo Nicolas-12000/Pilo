@@ -99,6 +99,7 @@ export type CaseSummary = {
 export type PendingReviewCase = CaseSummary & {
   applicantFullName: string;
   applicantEmail: string;
+  reviewBrief?: string;
 };
 
 export type CaseRequirementStatus = {
@@ -123,6 +124,8 @@ export type CaseDetail = CaseSummary & {
   procedureTypeDescription: string;
   requirements: CaseRequirementStatus[];
   recentAuditEvents: AuditEvent[];
+  guidanceCitizen?: string;
+  guidanceReviewer?: string;
 };
 
 export type DocumentExtraction = {
@@ -130,6 +133,14 @@ export type DocumentExtraction = {
   confidence: number;
   fields: Record<string, string>;
   processedAt: string;
+  citizenGuidance: string | null;
+  reviewerSummary: string | null;
+};
+
+export type ValidationFailure = {
+  code: string;
+  label: string;
+  hint: string;
 };
 
 export type DocumentRecord = {
@@ -141,7 +152,7 @@ export type DocumentRecord = {
   fileSize: number;
   status: DocumentStatus;
   extraction: DocumentExtraction | null;
-  validationFailures: string[];
+  validationFailures: ValidationFailure[];
   processingFailureReason: string | null;
 };
 

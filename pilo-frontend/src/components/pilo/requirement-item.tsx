@@ -17,6 +17,7 @@ type RequirementItemProps = {
   requirement: CaseRequirementStatus;
   documents: DocumentRecord[];
   allowDocumentDelete?: boolean;
+  documentAudience?: "citizen" | "reviewer";
   onUploaded: () => void;
 };
 
@@ -27,6 +28,7 @@ export function RequirementItem({
   requirement,
   documents,
   allowDocumentDelete = false,
+  documentAudience = "citizen",
   onUploaded,
 }: RequirementItemProps) {
   const [uploading, setUploading] = useState(false);
@@ -90,6 +92,7 @@ export function RequirementItem({
               caseId={caseId}
               document={document}
               allowDelete={allowDocumentDelete}
+              audience={documentAudience}
               onDeleted={onUploaded}
             />
           ))}

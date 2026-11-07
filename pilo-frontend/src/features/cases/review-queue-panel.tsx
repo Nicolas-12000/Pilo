@@ -65,6 +65,9 @@ export function ReviewQueuePanel() {
                       <p className="mt-xs text-body-sm text-on-surface-variant">
                         {item.applicantFullName} · {item.applicantEmail}
                       </p>
+                      {item.reviewBrief ? (
+                        <p className="mt-sm text-body-sm text-on-surface">{item.reviewBrief}</p>
+                      ) : null}
                     </div>
                     <div className="flex flex-col items-end gap-xs">
                       <StatusBadge status={caseStatus[item.status]} />

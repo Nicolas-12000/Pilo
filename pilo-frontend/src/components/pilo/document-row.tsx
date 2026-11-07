@@ -7,11 +7,8 @@ import { ApiError } from "@/lib/api/client";
 import { DocumentFileActions } from "@/components/pilo/document-preview";
 import { StatusBadge } from "@/components/pilo/status-badge";
 import { formatFileSize } from "@/lib/cases/dates";
-import {
-  extractionFieldLabel,
-  orderedExtractionEntries,
-  validationFailureLabel,
-} from "@/lib/cases/validation-labels";
+import { DocumentGuidance } from "@/components/pilo/document-guidance";
+import { extractionFieldLabel, orderedExtractionEntries } from "@/lib/cases/validation-labels";
 import { documentStatus } from "@/lib/cases/status";
 import type { DocumentRecord } from "@/lib/api/types";
 
@@ -30,11 +27,13 @@ export function DocumentRow({
   document,
   allowDelete = false,
   onDeleted,
+  audience = "citizen",
 }: {
   caseId: string;
   document: DocumentRecord;
   allowDelete?: boolean;
   onDeleted?: () => void;
+  audience?: "citizen" | "reviewer";
 }) {
   const [deleting, setDeleting] = useState(false);
   const failures = document.validationFailures ?? [];
@@ -42,6 +41,7 @@ export function DocumentRow({
   const extractionEntries = extraction ? orderedExtractionEntries(extraction.fields ?? {}) : [];
   const canOpen = PREVIEWABLE_STATUSES.has(document.status);
   const canDelete = allowDelete && DELETABLE_STATUSES.has(document.status);
+  const guidanceAudience = audience;
 
   async function handleDelete() {
     if (!window.confirm("¿Eliminar este archivo y volver a subir otro?")) {
@@ -107,9 +107,14 @@ export function DocumentRow({
             <div className="mt-sm">
               <ul className="flex flex-col gap-1 text-body-sm text-danger">
                 {failures.map((failure) => (
-                  <li key={failure} className="flex items-start gap-1.5">
-                    <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 shrink-0" />
-                    {validationFailureLabel(failure)}
+                  <li key={failure.code} className="flex flex-col gap-0.5">
+                    <span className="flex items-start gap-1.5">
+                      <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 shrink-0" />
+                      {failure.label}
+                    </span>
+                    {failure.hint ? (
+                      <span className="ps-5.5 text-body-sm text-on-surface-variant">{failure.hint}</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -143,6 +148,8 @@ export function DocumentRow({
             </Button>
           ) : null}
 
+          <DocumentGuidance document={document} audience={guidanceAudience} />
+
           {extraction ? (
             <div className="mt-sm rounded-sm bg-surface p-sm ring-1 ring-outline-variant">
               <div className="flex items-center gap-1.5 font-label text-on-surface">
@@ -150,7 +157,9 @@ export function DocumentRow({
                 Datos extraídos por IA
               </div>
               <p className="mt-1 text-body-sm text-on-surface-variant">
-                Contrástalos con la vista previa. Si no coinciden, rechaza el documento o el expediente.
+                {guidanceAudience === "reviewer"
+                  ? "Contrasta cada campo con la vista previa del archivo original."
+                  : "Abre la vista previa y comprueba que los datos coinciden con tu documento."}
               </p>
               <dl className="mt-sm grid gap-xs text-body-sm">
                 <div className="flex flex-wrap justify-between gap-x-md gap-y-0.5">
