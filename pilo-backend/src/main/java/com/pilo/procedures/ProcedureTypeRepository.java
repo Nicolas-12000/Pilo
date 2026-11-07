@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface ProcedureTypeRepository extends JpaRepository<ProcedureType, UUID> {
 
+	boolean existsByTitleIgnoreCase(String title);
+
 	@Query("""
 			SELECT DISTINCT pt FROM ProcedureType pt
 			LEFT JOIN FETCH pt.requirements

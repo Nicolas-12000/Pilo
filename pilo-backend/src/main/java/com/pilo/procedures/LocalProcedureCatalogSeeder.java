@@ -2,6 +2,9 @@ package com.pilo.procedures;
 
 import com.pilo.workflows.WorkflowBlueprints;
 import com.pilo.workflows.WorkflowDefinitionService;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,13 +27,19 @@ public class LocalProcedureCatalogSeeder implements ApplicationRunner {
 	@Override
 	@Transactional
 	public void run(ApplicationArguments args) {
-		if (procedureTypeRepository.count() == 0) {
-			ProcedureCatalogFactory.seedRentalRegistration(procedureTypeRepository, workflowDefinitionService);
-			ProcedureCatalogFactory.seedEmpadronamiento(procedureTypeRepository, workflowDefinitionService);
-			return;
-		}
-
 		procedureTypeRepository.findAll().forEach(procedureType ->
 				workflowDefinitionService.attach(procedureType, WorkflowBlueprints.documentCollectionReview()));
+
+		// Seed by title so catalogues created before a sample was added still receive it.
+		Map<String, BiFunction<ProcedureTypeRepository, WorkflowDefinitionService, ?>> samples = new LinkedHashMap<>();
+		samples.put(ProcedureCatalogFactory.RENTAL_REGISTRATION, ProcedureCatalogFactory::seedRentalRegistration);
+		samples.put(ProcedureCatalogFactory.EMPADRONAMIENTO, ProcedureCatalogFactory::seedEmpadronamiento);
+		samples.put(ProcedureCatalogFactory.OBRA_MENOR, ProcedureCatalogFactory::seedObraMenor);
+		samples.put(ProcedureCatalogFactory.BONO_ALQUILER_JOVEN, ProcedureCatalogFactory::seedBonoAlquilerJoven);
+		samples.forEach((title, seed) -> {
+			if (!procedureTypeRepository.existsByTitleIgnoreCase(title)) {
+				seed.apply(procedureTypeRepository, workflowDefinitionService);
+			}
+		});
 	}
 }
