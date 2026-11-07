@@ -57,3 +57,4 @@ scripts/subtree-remotes.env
 docs/aws-operations.md
 docs/testing.md
 docs/evidence/
+__pycache__/

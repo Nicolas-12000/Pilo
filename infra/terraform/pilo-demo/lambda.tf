@@ -15,7 +15,7 @@ resource "aws_lambda_function" "worker" {
       PILO_BACKEND_URL       = "http://${aws_eip.api.public_ip}"
       PILO_INTERNAL_API_KEY  = var.pilo_internal_api_key
       PILO_AI_PROVIDER       = "mock"
-      GEMINI_MODEL           = "gemini-2.0-flash"
+      GEMINI_MODEL           = "gemini-3.6-flash"
     }
   }
 }

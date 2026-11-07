@@ -10,7 +10,7 @@ Python worker triggered by S3 `ObjectCreated` events. Downloads the uploaded fil
 | `PILO_INTERNAL_API_KEY` | yes | Same as backend `PILO_INTERNAL_API_KEY` |
 | `PILO_AI_PROVIDER` | no | `mock` (default) or `gemini` |
 | `GEMINI_API_KEY` | if gemini | Google AI Studio key |
-| `GEMINI_MODEL` | no | Default `gemini-2.0-flash` |
+| `GEMINI_MODEL` | no | Default `gemini-3.6-flash` |
 
 ## Build deployment package
 

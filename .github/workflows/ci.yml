@@ -21,6 +21,18 @@ jobs:
       - name: Unit and integration tests
         run: ./mvnw -B test
 
+  worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pilo-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -v
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

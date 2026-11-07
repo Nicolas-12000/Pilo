@@ -369,7 +369,7 @@ print(json.dumps({"Variables": {
     "PILO_BACKEND_URL": f"http://{eip}",
     "PILO_INTERNAL_API_KEY": key,
     "PILO_AI_PROVIDER": "mock",
-    "GEMINI_MODEL": "gemini-2.0-flash",
+    "GEMINI_MODEL": "gemini-3.6-flash",
 }}))
 PY
 )
