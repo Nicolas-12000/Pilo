@@ -111,7 +111,7 @@ server:
       min-spare: 2
 pilo:
   seed:
-    enabled: false
+    enabled: ${PILO_SEED_ENABLED:false}
   storage:
     provider: s3
   processing:

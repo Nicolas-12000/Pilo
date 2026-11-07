@@ -1,6 +1,12 @@
 version: 1
 applications:
   - appRoot: pilo-frontend
+    env:
+      variables:
+        # Same-origin /api is rewritten in next.config (Amplify console cannot target http:// EC2).
+        PILO_BACKEND_ORIGIN: http://34.251.225.42
+        NEXT_PUBLIC_ENABLE_DEMO_LOGIN: "true"
+        NEXT_PUBLIC_SITE_URL: https://main.d1qepayhhpczn7.amplifyapp.com
     frontend:
       phases:
         preBuild:

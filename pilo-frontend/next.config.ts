@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const explicitApiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 const isDev = process.env.NODE_ENV !== "production";
+/** Amplify Hosting rewrite to HTTP EC2 is blocked; Next proxies same-origin /api server-side. */
+const backendOrigin = (
+  process.env.PILO_BACKEND_ORIGIN ??
+  (isDev ? "http://localhost:8080" : "")
+).replace(/\/$/, "");
 const apiConnect = explicitApiUrl || (isDev ? "http://localhost:8080" : "");
 
 // Turbopack/webpack dev mode needs 'unsafe-eval' (source maps, HMR) and a websocket connection
@@ -42,6 +47,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    if (!backendOrigin) {
+      return [];
+    }
+    return [{ source: "/api/:path*", destination: `${backendOrigin}/api/:path*` }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
