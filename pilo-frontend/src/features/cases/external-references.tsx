@@ -72,7 +72,7 @@ export function ExternalReferences({ defaultQuery }: ExternalReferencesProps) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Buscar normativa, datasets o procedimientos…"
           aria-label="Término de búsqueda"
-          className="min-w-0 min-w-[14rem] flex-1"
+          className="min-w-0 flex-1 sm:min-w-56"
         />
         <Button type="submit" variant="secondary" disabled={loading}>
           {loading ? (
@@ -128,7 +128,7 @@ function ReferenceItem({ item }: { item: ExternalReference }) {
   return (
     <li className="overflow-hidden rounded-md border border-outline-variant/60 bg-surface-container-low p-md">
       <div className="flex flex-wrap items-start justify-between gap-sm">
-        <p className="min-w-0 flex-1 font-title-sm text-on-surface [overflow-wrap:anywhere] line-clamp-3">
+        <p className="min-w-0 flex-1 wrap-anywhere font-title-sm text-on-surface line-clamp-3">
           {headline}
         </p>
         {item.demo ? (
@@ -139,7 +139,7 @@ function ReferenceItem({ item }: { item: ExternalReference }) {
       </div>
 
       {metaId ? (
-        <p className="mt-1.5 font-code text-body-sm text-on-surface-variant [overflow-wrap:anywhere]">
+        <p className="mt-1.5 wrap-anywhere font-code text-body-sm text-on-surface-variant">
           {metaId}
         </p>
       ) : null}
