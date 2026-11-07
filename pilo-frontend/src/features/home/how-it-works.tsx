@@ -3,8 +3,7 @@ import { StaggerItem } from "@/components/motion/stagger-item";
 const steps = [
   {
     title: "Elige el trámite",
-    description:
-      "Consulta el catálogo con los requisitos y plazos de cada trámite. No necesitas cuenta para explorarlo.",
+    description: "Requisitos y plazos de cada trámite, sin cuenta si solo quieres mirar.",
   },
   {
     title: "Sube los documentos",

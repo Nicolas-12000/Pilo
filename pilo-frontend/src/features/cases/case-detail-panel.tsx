@@ -70,6 +70,8 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
   const grouped = documentsByRequirement(documents);
   const processing = hasWorkInProgress(data);
   const canReview = user?.role === "REVIEWER" || user?.role === "ADMIN";
+  const caseOpen = detail.status !== "APPROVED" && detail.status !== "REJECTED";
+  const allowDocumentDelete = caseOpen && user?.role !== "REVIEWER";
 
   return (
     <>
@@ -143,6 +145,7 @@ export function CaseDetailPanel({ caseId }: { caseId: string }) {
                   caseId={caseId}
                   requirement={requirement}
                   documents={grouped[requirement.id] ?? []}
+                  allowDocumentDelete={allowDocumentDelete}
                   onUploaded={() => void refetch()}
                 />
               ))}

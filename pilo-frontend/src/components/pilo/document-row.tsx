@@ -104,14 +104,43 @@ export function DocumentRow({
           ) : null}
 
           {failures.length > 0 ? (
-            <ul className="mt-sm flex flex-col gap-1 text-body-sm text-danger">
-              {failures.map((failure) => (
-                <li key={failure} className="flex items-start gap-1.5">
-                  <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 shrink-0" />
-                  {validationFailureLabel(failure)}
-                </li>
-              ))}
-            </ul>
+            <div className="mt-sm">
+              <ul className="flex flex-col gap-1 text-body-sm text-danger">
+                {failures.map((failure) => (
+                  <li key={failure} className="flex items-start gap-1.5">
+                    <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 shrink-0" />
+                    {validationFailureLabel(failure)}
+                  </li>
+                ))}
+              </ul>
+              {canDelete ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="mt-sm"
+                  disabled={deleting}
+                  onClick={() => void handleDelete()}
+                >
+                  <Trash2 size={16} strokeWidth={1.75} />
+                  Quitar archivo y subir otro
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {canDelete && failures.length === 0 && document.status === "PROCESSING_FAILED" ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="mt-sm"
+              disabled={deleting}
+              onClick={() => void handleDelete()}
+            >
+              <Trash2 size={16} strokeWidth={1.75} />
+              Quitar archivo y subir otro
+            </Button>
           ) : null}
 
           {extraction ? (

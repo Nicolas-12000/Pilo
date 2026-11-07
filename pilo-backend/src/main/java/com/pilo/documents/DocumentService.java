@@ -154,7 +154,7 @@ public class DocumentService {
 	@Transactional
 	public void delete(UUID caseId, UUID documentId, UUID userId, Role role) {
 		ProcedureCase procedureCase = caseAccessService.requireAccessibleCase(caseId, userId, role);
-		if (role != Role.USER) {
+		if (role == Role.REVIEWER) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "DOCUMENT_DELETE_FORBIDDEN");
 		}
 		if (procedureCase.getStatus() == CaseStatus.APPROVED
