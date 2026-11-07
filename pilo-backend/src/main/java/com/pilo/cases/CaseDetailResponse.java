@@ -16,4 +16,6 @@ public record CaseDetailResponse(
 		Instant deadlineAt,
 		Instant createdAt,
 		List<CaseRequirementStatusResponse> requirements,
-		List<AuditEventResponse> recentAuditEvents) {}
+		List<AuditEventResponse> recentAuditEvents,
+		String guidanceCitizen,
+		String guidanceReviewer) {}

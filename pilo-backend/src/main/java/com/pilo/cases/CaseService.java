@@ -13,9 +13,11 @@ import com.pilo.workflows.WorkflowInitializer;
 import com.pilo.workflows.WorkflowService;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ public class CaseService {
 	private final WorkflowInitializer workflowInitializer;
 	private final WorkflowService workflowService;
 	private final AuditService auditService;
+	private final CaseGuidanceService caseGuidanceService;
 
 	public CaseService(
 			ProcedureCaseRepository procedureCaseRepository,
@@ -43,7 +46,8 @@ public class CaseService {
 			CaseAccessService caseAccessService,
 			WorkflowInitializer workflowInitializer,
 			WorkflowService workflowService,
-			AuditService auditService) {
+			AuditService auditService,
+			CaseGuidanceService caseGuidanceService) {
 		this.procedureCaseRepository = procedureCaseRepository;
 		this.procedureTypeRepository = procedureTypeRepository;
 		this.userRepository = userRepository;
@@ -53,6 +57,7 @@ public class CaseService {
 		this.workflowInitializer = workflowInitializer;
 		this.workflowService = workflowService;
 		this.auditService = auditService;
+		this.caseGuidanceService = caseGuidanceService;
 	}
 
 	@Transactional
@@ -100,9 +105,21 @@ public class CaseService {
 		if (role != Role.REVIEWER && role != Role.ADMIN) {
 			throw new ResponseStatusException(HttpStatus.FORBIDDEN);
 		}
-		return procedureCaseRepository.findPendingReview().stream()
-				.map(PendingReviewCaseResponse::from)
-				.toList();
+		List<ProcedureCase> pending = procedureCaseRepository.findPendingReview();
+		if (pending.isEmpty()) {
+			return List.of();
+		}
+		List<UUID> caseIds = pending.stream().map(ProcedureCase::getId).toList();
+		Map<UUID, List<Document>> documentsByCase = documentRepository.findByCaseIdIn(caseIds).stream()
+				.collect(Collectors.groupingBy(document -> document.getProcedureCase().getId()));
+		List<PendingReviewCaseResponse> responses = new ArrayList<>();
+		for (ProcedureCase procedureCase : pending) {
+			List<Document> documents = documentsByCase.getOrDefault(procedureCase.getId(), List.of());
+			String brief = caseGuidanceService.briefForReviewQueue(
+					procedureCase, procedureCase.getProcedureType().getRequirements(), documents);
+			responses.add(PendingReviewCaseResponse.from(procedureCase, brief));
+		}
+		return responses;
 	}
 
 	@Transactional(readOnly = true)
@@ -120,6 +137,8 @@ public class CaseService {
 				.toList();
 		List<UUID> documentIds = documents.stream().map(Document::getId).toList();
 		List<AuditEventResponse> auditEvents = auditService.getCaseTimeline(caseId, documentIds);
+		var caseGuidance = caseGuidanceService.summarize(
+				procedureCase, procedureCase.getProcedureType().getRequirements(), documents);
 
 		return new CaseDetailResponse(
 				procedureCase.getId(),
@@ -132,7 +151,9 @@ public class CaseService {
 				procedureCase.getDeadlineAt(),
 				procedureCase.getCreatedAt(),
 				requirements,
-				auditEvents);
+				auditEvents,
+				caseGuidance.citizenSummary(),
+				caseGuidance.reviewerSummary());
 	}
 
 	private String resolveFulfillment(UUID requirementId, List<Document> documents) {

@@ -13,9 +13,10 @@ public record PendingReviewCaseResponse(
 		Instant deadlineAt,
 		Instant createdAt,
 		String applicantFullName,
-		String applicantEmail) {
+		String applicantEmail,
+		String reviewBrief) {
 
-	public static PendingReviewCaseResponse from(ProcedureCase procedureCase) {
+	public static PendingReviewCaseResponse from(ProcedureCase procedureCase, String reviewBrief) {
 		return new PendingReviewCaseResponse(
 				procedureCase.getId(),
 				procedureCase.getCaseNumber(),
@@ -26,6 +27,7 @@ public record PendingReviewCaseResponse(
 				procedureCase.getDeadlineAt(),
 				procedureCase.getCreatedAt(),
 				procedureCase.getUser().getFullName(),
-				procedureCase.getUser().getEmail());
+				procedureCase.getUser().getEmail(),
+				reviewBrief);
 	}
 }

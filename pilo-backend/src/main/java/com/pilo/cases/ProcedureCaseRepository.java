@@ -28,7 +28,8 @@ public interface ProcedureCaseRepository extends JpaRepository<ProcedureCase, UU
 
 	@Query("""
 			SELECT DISTINCT pc FROM ProcedureCase pc
-			JOIN FETCH pc.procedureType
+			JOIN FETCH pc.procedureType pt
+			LEFT JOIN FETCH pt.requirements
 			JOIN FETCH pc.user
 			JOIN WorkflowTask wt ON wt.procedureCase = pc
 			WHERE pc.status = 'UNDER_REVIEW'

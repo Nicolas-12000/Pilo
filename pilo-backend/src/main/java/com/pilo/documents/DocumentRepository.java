@@ -1,5 +1,6 @@
 package com.pilo.documents;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,6 +17,14 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 			ORDER BY d.createdAt DESC
 			""")
 	List<Document> findByCaseId(@Param("caseId") UUID caseId);
+
+	@Query("""
+			SELECT d FROM Document d
+			JOIN FETCH d.requirement
+			JOIN FETCH d.procedureCase pc
+			WHERE pc.id IN :caseIds
+			""")
+	List<Document> findByCaseIdIn(@Param("caseIds") Collection<UUID> caseIds);
 
 	Optional<Document> findByIdAndProcedureCaseId(UUID id, UUID caseId);
 
