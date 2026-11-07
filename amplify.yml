@@ -11,7 +11,7 @@ applications:
             - pnpm install --frozen-lockfile
         build:
           commands:
-            - pnpm build -- --webpack
+            - pnpm build
       artifacts:
         baseDirectory: .next
         files:
