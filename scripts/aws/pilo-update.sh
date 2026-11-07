@@ -3,6 +3,13 @@
 set -euo pipefail
 
 APP_DIR="${PILO_APP_DIR:-/home/ubuntu/pilo}"
+
+# SSM (root) cannot run git in /home/ubuntu/pilo without safe.directory or dropping privileges.
+if [[ "$(id -u)" -eq 0 ]]; then
+  export PILO_APP_DIR="$APP_DIR"
+  exec sudo -u ubuntu -E HOME=/home/ubuntu bash "$0" "$@"
+fi
+
 cd "$APP_DIR"
 
 if [[ ! -f .env.aws ]]; then

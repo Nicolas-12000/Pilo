@@ -120,6 +120,10 @@ cat > /usr/local/bin/pilo-update.sh <<'UPDATE'
 #!/usr/bin/env bash
 set -euo pipefail
 APP_DIR="${PILO_APP_DIR:-/home/ubuntu/pilo}"
+if [[ "$(id -u)" -eq 0 ]]; then
+  export PILO_APP_DIR="$APP_DIR"
+  exec sudo -u ubuntu -E HOME=/home/ubuntu bash "$0" "$@"
+fi
 cd "$APP_DIR"
 if [[ ! -f .env.aws ]]; then
   echo "[pilo-update] missing .env.aws" >&2
