@@ -1,7 +1,6 @@
 package com.pilo.auth;
 
-import com.pilo.users.User;
-import com.pilo.users.UserRepository;
+import com.pilo.auth.application.AuthAccountUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -14,20 +13,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-	private final AuthService authService;
-	private final UserRepository userRepository;
+	private final AuthAccountUseCase authAccountUseCase;
 	private final LoginRateLimiter loginRateLimiter;
 
-	public AuthController(
-			AuthService authService, UserRepository userRepository, LoginRateLimiter loginRateLimiter) {
-		this.authService = authService;
-		this.userRepository = userRepository;
+	public AuthController(AuthAccountUseCase authAccountUseCase, LoginRateLimiter loginRateLimiter) {
+		this.authAccountUseCase = authAccountUseCase;
 		this.loginRateLimiter = loginRateLimiter;
 	}
 
@@ -40,30 +35,27 @@ public class AuthController {
 		if (!loginRateLimiter.tryAcquire(httpRequest.getRemoteAddr())) {
 			throw new TooManyLoginAttemptsException();
 		}
-		return authService.login(request);
+		return authAccountUseCase.login(request);
 	}
 
 	@GetMapping("/me")
 	@ResponseStatus(HttpStatus.OK)
 	public UserResponse me(Authentication authentication) {
 		UUID userId = UUID.fromString(authentication.getName());
-		User user = userRepository
-				.findById(userId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-		return UserResponse.from(user);
+		return authAccountUseCase.getCurrentUser(userId);
 	}
 
 	@PatchMapping("/me")
 	public UserResponse updateProfile(
 			Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
 		UUID userId = UUID.fromString(authentication.getName());
-		return authService.updateProfile(userId, request);
+		return authAccountUseCase.updateProfile(userId, request);
 	}
 
 	@PostMapping("/me/password")
 	public LoginResponse changePassword(
 			Authentication authentication, @Valid @RequestBody ChangePasswordRequest request) {
 		UUID userId = UUID.fromString(authentication.getName());
-		return authService.changePassword(userId, request);
+		return authAccountUseCase.changePassword(userId, request);
 	}
 }

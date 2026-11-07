@@ -1,5 +1,9 @@
 package com.pilo.cases;
 
+import com.pilo.cases.application.CreateCaseUseCase;
+import com.pilo.cases.application.GetCaseDetailUseCase;
+import com.pilo.cases.application.ListMyCasesUseCase;
+import com.pilo.cases.application.ListPendingReviewCasesUseCase;
 import com.pilo.common.AuthSupport;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -17,30 +21,40 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/cases")
 public class CaseController {
 
-	private final CaseService caseService;
+	private final CreateCaseUseCase createCaseUseCase;
+	private final ListMyCasesUseCase listMyCasesUseCase;
+	private final ListPendingReviewCasesUseCase listPendingReviewCasesUseCase;
+	private final GetCaseDetailUseCase getCaseDetailUseCase;
 
-	public CaseController(CaseService caseService) {
-		this.caseService = caseService;
+	public CaseController(
+			CreateCaseUseCase createCaseUseCase,
+			ListMyCasesUseCase listMyCasesUseCase,
+			ListPendingReviewCasesUseCase listPendingReviewCasesUseCase,
+			GetCaseDetailUseCase getCaseDetailUseCase) {
+		this.createCaseUseCase = createCaseUseCase;
+		this.listMyCasesUseCase = listMyCasesUseCase;
+		this.listPendingReviewCasesUseCase = listPendingReviewCasesUseCase;
+		this.getCaseDetailUseCase = getCaseDetailUseCase;
 	}
 
 	@PostMapping
 	public CaseDetailResponse create(@Valid @RequestBody CreateCaseRequest request, Authentication authentication) {
-		return caseService.createCase(AuthSupport.userId(authentication), request);
+		return createCaseUseCase.execute(AuthSupport.userId(authentication), request);
 	}
 
 	@GetMapping
 	public List<CaseSummaryResponse> listMine(Authentication authentication) {
-		return caseService.listMyCases(AuthSupport.userId(authentication));
+		return listMyCasesUseCase.execute(AuthSupport.userId(authentication));
 	}
 
 	@GetMapping("/pending-review")
 	@PreAuthorize("hasAnyRole('REVIEWER', 'ADMIN')")
 	public List<PendingReviewCaseResponse> listPendingReview(Authentication authentication) {
-		return caseService.listPendingReview(AuthSupport.role(authentication));
+		return listPendingReviewCasesUseCase.execute(AuthSupport.role(authentication));
 	}
 
 	@GetMapping("/{id}")
 	public CaseDetailResponse get(@PathVariable UUID id, Authentication authentication) {
-		return caseService.getCaseDetail(id, AuthSupport.userId(authentication), AuthSupport.role(authentication));
+		return getCaseDetailUseCase.execute(id, AuthSupport.userId(authentication), AuthSupport.role(authentication));
 	}
 }

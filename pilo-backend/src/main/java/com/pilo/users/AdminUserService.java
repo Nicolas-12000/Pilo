@@ -1,9 +1,9 @@
 package com.pilo.users;
 
-import com.pilo.audit.AuditService;
+import com.pilo.users.events.UserAccessChangeEvent;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,11 +13,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class AdminUserService {
 
 	private final UserRepository userRepository;
-	private final AuditService auditService;
+	private final ApplicationEventPublisher eventPublisher;
 
-	public AdminUserService(UserRepository userRepository, AuditService auditService) {
+	public AdminUserService(UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
 		this.userRepository = userRepository;
-		this.auditService = auditService;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional(readOnly = true)
@@ -42,12 +42,8 @@ public class AdminUserService {
 		target.setEnabled(enabled);
 		target.bumpTokenVersion();
 		userRepository.save(target);
-		auditService.record(
-				actor,
-				enabled ? "USER_ENABLED" : "USER_DISABLED",
-				"user:" + target.getId(),
-				"SUCCESS",
-				Map.of("email", target.getEmail()));
+		eventPublisher.publishEvent(
+				new UserAccessChangeEvent(actor.getId(), target.getId(), target.getEmail(), enabled));
 		return AdminUserResponse.from(target);
 	}
 }

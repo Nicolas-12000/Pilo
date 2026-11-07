@@ -1,8 +1,9 @@
 package com.pilo.workflows;
 
 import com.pilo.cases.CaseDetailResponse;
-import com.pilo.cases.CaseService;
 import com.pilo.common.AuthSupport;
+import com.pilo.workflows.application.CompleteFinalReviewUseCase;
+import com.pilo.workflows.application.GetCaseWorkflowUseCase;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -20,17 +21,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/cases/{caseId}/workflow")
 public class WorkflowController {
 
-	private final WorkflowService workflowService;
-	private final CaseService caseService;
+	private final GetCaseWorkflowUseCase getCaseWorkflowUseCase;
+	private final CompleteFinalReviewUseCase completeFinalReviewUseCase;
 
-	public WorkflowController(WorkflowService workflowService, CaseService caseService) {
-		this.workflowService = workflowService;
-		this.caseService = caseService;
+	public WorkflowController(
+			GetCaseWorkflowUseCase getCaseWorkflowUseCase, CompleteFinalReviewUseCase completeFinalReviewUseCase) {
+		this.getCaseWorkflowUseCase = getCaseWorkflowUseCase;
+		this.completeFinalReviewUseCase = completeFinalReviewUseCase;
 	}
 
 	@GetMapping
 	public WorkflowResponse get(@PathVariable UUID caseId, Authentication authentication) {
-		return workflowService.getWorkflow(caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication));
+		return getCaseWorkflowUseCase.execute(caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication));
 	}
 
 	@PostMapping("/final-review")
@@ -40,8 +42,7 @@ public class WorkflowController {
 			@PathVariable UUID caseId,
 			@Valid @RequestBody FinalReviewRequest request,
 			Authentication authentication) {
-		workflowService.completeFinalReview(
+		return completeFinalReviewUseCase.execute(
 				caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication), request);
-		return caseService.getCaseDetail(caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication));
 	}
 }

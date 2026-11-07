@@ -46,6 +46,9 @@ pilo-backend/storage/
 # Other
 Piolo.html
 
+# Local subtree publish config (repo URLs)
+scripts/subtree-remotes.env
+
 # Runbooks and notes for us only (not the public repo)
 docs/aws-operations.md
 docs/testing.md

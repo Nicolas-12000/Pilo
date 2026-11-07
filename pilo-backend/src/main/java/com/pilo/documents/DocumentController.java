@@ -1,6 +1,8 @@
 package com.pilo.documents;
 
 import com.pilo.common.AuthSupport;
+import com.pilo.documents.application.CaseDocumentUseCase;
+import com.pilo.documents.application.StreamDocumentContentUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -20,12 +22,13 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/cases/{caseId}/documents")
 public class DocumentController {
 
-	private final DocumentService documentService;
-	private final DocumentContentService documentContentService;
+	private final CaseDocumentUseCase caseDocumentUseCase;
+	private final StreamDocumentContentUseCase streamDocumentContentUseCase;
 
-	public DocumentController(DocumentService documentService, DocumentContentService documentContentService) {
-		this.documentService = documentService;
-		this.documentContentService = documentContentService;
+	public DocumentController(
+			CaseDocumentUseCase caseDocumentUseCase, StreamDocumentContentUseCase streamDocumentContentUseCase) {
+		this.caseDocumentUseCase = caseDocumentUseCase;
+		this.streamDocumentContentUseCase = streamDocumentContentUseCase;
 	}
 
 	@PostMapping("/presigned-url")
@@ -33,7 +36,7 @@ public class DocumentController {
 			@PathVariable UUID caseId,
 			@Valid @RequestBody PresignedUrlRequest request,
 			Authentication authentication) {
-		return documentService.createUploadInstructions(
+		return caseDocumentUseCase.requestPresignedUpload(
 				caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication), request);
 	}
 
@@ -43,13 +46,13 @@ public class DocumentController {
 			@RequestParam UUID requirementId,
 			@RequestParam("file") MultipartFile file,
 			Authentication authentication) {
-		return documentService.upload(
+		return caseDocumentUseCase.uploadMultipart(
 				caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication), requirementId, file);
 	}
 
 	@GetMapping
 	public List<DocumentResponse> list(@PathVariable UUID caseId, Authentication authentication) {
-		return documentService.list(caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication));
+		return caseDocumentUseCase.listDocuments(caseId, AuthSupport.userId(authentication), AuthSupport.role(authentication));
 	}
 
 	@GetMapping("/{documentId}/content")
@@ -58,7 +61,7 @@ public class DocumentController {
 			@PathVariable UUID documentId,
 			@RequestParam(defaultValue = "false") boolean download,
 			Authentication authentication) {
-		return documentContentService.stream(
+		return streamDocumentContentUseCase.execute(
 				caseId,
 				documentId,
 				AuthSupport.userId(authentication),
