@@ -17,6 +17,7 @@ import {
   createAdminRequirement,
   deleteAdminRequirement,
   getAdminProcedure,
+  setAdminProcedureArchived,
   updateAdminProcedure,
   updateAdminRequirement,
 } from "@/lib/api/admin-procedures";
@@ -165,6 +166,18 @@ export function ProcedureEditor({ procedureId }: ProcedureEditorProps) {
     },
   });
 
+  const toggleArchived = useMutation({
+    mutationFn: (archived: boolean) => setAdminProcedureArchived(procedureId!, archived),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: adminProcedureKeys.all });
+      void queryClient.invalidateQueries({ queryKey: procedureKeys.all });
+      toast.success(result.archived ? "Trámite archivado" : "Trámite publicado de nuevo");
+    },
+    onError: (cause) => {
+      toast.error(cause instanceof ApiError ? cause.message : "No se ha podido cambiar la visibilidad.");
+    },
+  });
+
   function startEditRequirement(requirement: AdminRequirement) {
     setEditingRequirement(requirement);
     requirementForm.reset({
@@ -233,6 +246,33 @@ export function ProcedureEditor({ procedureId }: ProcedureEditorProps) {
           </Button>
         </div>
       </form>
+
+      {isEditing && detailQuery.data ? (
+        <section className="mt-xl flex flex-wrap items-center justify-between gap-md rounded-lg bg-surface-container p-md md:p-lg">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-xs">
+              <h2 className="font-title-md text-on-surface">Visibilidad</h2>
+              <Badge tone={detailQuery.data.archived ? "pending" : "approved"}>
+                {detailQuery.data.archived ? "Archivado" : "Publicado"}
+              </Badge>
+            </div>
+            <p className="mt-1 text-body-sm text-on-surface-variant">
+              {detailQuery.data.archived
+                ? "No aparece en el catálogo y no admite expedientes nuevos. Los existentes siguen su curso."
+                : "Al archivarlo deja de aparecer en el catálogo; los expedientes abiertos no se ven afectados."}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={toggleArchived.isPending}
+            onClick={() => toggleArchived.mutate(!detailQuery.data.archived)}
+          >
+            {toggleArchived.isPending ? <Loader2 size={18} className="animate-spin" /> : null}
+            {detailQuery.data.archived ? "Publicar de nuevo" : "Archivar trámite"}
+          </Button>
+        </section>
+      ) : null}
 
       {isEditing && detailQuery.data ? (
         <section className="mt-xl grid gap-lg">

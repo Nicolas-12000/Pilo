@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Settings2, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/pilo/page-header";
+import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonList } from "@/components/ui/skeleton";
@@ -55,7 +56,10 @@ export function AdminProceduresPanel() {
                   className="elevation-card flex flex-wrap items-center justify-between gap-md rounded-lg p-md transition-[box-shadow,transform] duration-content hover:-translate-y-px hover:shadow-elevated md:p-lg"
                 >
                   <div className="min-w-0">
-                    <h2 className="font-title-md text-on-surface">{procedure.title}</h2>
+                    <div className="flex flex-wrap items-center gap-xs">
+                      <h2 className="font-title-md text-on-surface">{procedure.title}</h2>
+                      {procedure.archived ? <Badge tone="pending">Archivado</Badge> : null}
+                    </div>
                     <p className="mt-1 line-clamp-2 text-body-sm text-on-surface-variant">
                       {procedure.description}
                     </p>

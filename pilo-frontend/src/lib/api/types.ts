@@ -29,6 +29,8 @@ export type ProcedureTypeSummary = {
   description: string;
   targetDays: number;
   requirementCount: number;
+  /** Only ever true in admin listings; the public catalogue hides archived procedures. */
+  archived?: boolean;
 };
 
 export type Requirement = {
@@ -55,6 +57,7 @@ export type AdminRequirement = Requirement & {
 
 export type AdminProcedureTypeDetail = ProcedureTypeSummary & {
   hasCases: boolean;
+  archived: boolean;
   requirements: AdminRequirement[];
 };
 

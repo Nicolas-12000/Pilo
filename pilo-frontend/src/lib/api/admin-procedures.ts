@@ -73,6 +73,21 @@ export async function updateAdminProcedure(
   return (await response.json()) as AdminProcedureTypeDetail;
 }
 
+export async function setAdminProcedureArchived(
+  id: string,
+  archived: boolean,
+): Promise<AdminProcedureTypeDetail> {
+  const response = await authFetch(`${getApiUrl()}/api/v1/admin/procedures/types/${id}/archived`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ archived }),
+  });
+  if (!response.ok) {
+    await readApiError(response);
+  }
+  return (await response.json()) as AdminProcedureTypeDetail;
+}
+
 export async function createAdminRequirement(
   procedureId: string,
   input: RequirementInput,
