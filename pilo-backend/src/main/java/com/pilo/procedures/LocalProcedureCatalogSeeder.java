@@ -36,6 +36,19 @@ public class LocalProcedureCatalogSeeder implements ApplicationRunner {
 		samples.put(ProcedureCatalogFactory.EMPADRONAMIENTO, ProcedureCatalogFactory::seedEmpadronamiento);
 		samples.put(ProcedureCatalogFactory.OBRA_MENOR, ProcedureCatalogFactory::seedObraMenor);
 		samples.put(ProcedureCatalogFactory.BONO_ALQUILER_JOVEN, ProcedureCatalogFactory::seedBonoAlquilerJoven);
+		samples.put(
+				ProcedureCatalogFactory.CERTIFICADO_EMPADRONAMIENTO,
+				ProcedureCatalogFactory::seedCertificadoEmpadronamiento);
+		samples.put(ProcedureCatalogFactory.LICENCIA_APERTURA, ProcedureCatalogFactory::seedLicenciaApertura);
+		samples.put(ProcedureCatalogFactory.CEDULA_HABITABILIDAD, ProcedureCatalogFactory::seedCedulaHabitabilidad);
+		samples.put(ProcedureCatalogFactory.RENOVACION_DNI, ProcedureCatalogFactory::seedRenovacionDni);
+		samples.put(ProcedureCatalogFactory.TARJETA_SANITARIA, ProcedureCatalogFactory::seedTarjetaSanitaria);
+		samples.put(ProcedureCatalogFactory.ALTA_AUTONOMO, ProcedureCatalogFactory::seedAltaAutonomo);
+		samples.put(
+				ProcedureCatalogFactory.CAMBIO_TITULAR_SUMINISTROS, ProcedureCatalogFactory::seedCambioTitularSuministros);
+		samples.put(ProcedureCatalogFactory.PAREJA_DE_HECHO, ProcedureCatalogFactory::seedParejaDeHecho);
+		samples.put(ProcedureCatalogFactory.GRADO_DEPENDENCIA, ProcedureCatalogFactory::seedGradoDependencia);
+		samples.put(ProcedureCatalogFactory.BONIFICACION_IBI, ProcedureCatalogFactory::seedBonificacionIbi);
 		samples.forEach((title, seed) -> {
 			if (!procedureTypeRepository.existsByTitleIgnoreCase(title)) {
 				seed.apply(procedureTypeRepository, workflowDefinitionService);

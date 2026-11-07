@@ -27,4 +27,4 @@ Upload `dist/pilo-document-processor.zip` to Lambda (handler: `handler.handler`)
 cases/{caseId}/documents/{documentId}/{fileName}
 ```
 
-AWS wiring (S3 trigger, IAM, env vars) is documented in the [PILO monorepo](https://github.com/Nicolas-12000/Pilo) (`docs/aws-operations.md`, local only if not published).
+AWS wiring (S3 trigger, Lambda env, Gemini): `scripts/aws/README.md` in the monorepo.

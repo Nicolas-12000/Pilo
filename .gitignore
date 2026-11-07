@@ -54,6 +54,7 @@ Piolo.html
 scripts/subtree-remotes.env
 
 # Runbooks and notes for us only (not the public repo)
+pilo.md
 docs/aws-operations.md
 docs/testing.md
 docs/evidence/

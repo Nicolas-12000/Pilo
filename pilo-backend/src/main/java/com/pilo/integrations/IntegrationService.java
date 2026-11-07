@@ -171,7 +171,7 @@ public class IntegrationService {
 				results.add(ExternalReferenceResponse.live(
 						"BOE",
 						identifier == null ? title : identifier,
-						title,
+						truncate(title, 200),
 						url,
 						"Normativa consolidada publicada en el BOE."));
 				if (results.size() >= MAX_RESULTS) {

@@ -119,17 +119,37 @@ cd pilo-frontend && pnpm test
 
 ## Repository
 
-Single **monorepo** — source of truth and **only** repo that runs CI (`.github/workflows/ci.yml`).
-
-For grading you may temporarily publish `pilo-backend` / `pilo-frontend` / `pilo-worker` via subtree split (`scripts/SPLIT-REPOS.md`); those copies are disposable after the presentation.
-
 ```
-pilo-backend/    Spring Boot API
-pilo-frontend/   Next.js UI
-pilo-worker/     Lambda: download from S3, extract, callback
-docker-compose.yml        local Postgres
-docker-compose.ec2.yml    API container on the micro (RDS stays outside)
+pilo-backend/     Spring Boot API
+pilo-frontend/    Next.js UI
+pilo-worker/      Lambda (S3 → extract → callback)
+scripts/aws/      Provision, deploy helpers, verify
+docker-compose.yml
 .github/workflows/ci.yml
+```
+
+AWS: see `scripts/aws/README.md`.
+
+## Screenshots for this README
+
+Put PNG or WebP under `docs/screenshots/` (paths referenced below). Use the **public demo** (Amplify) or a clean local build; hide real DNI numbers if you use a real scan.
+
+| File | What to capture |
+|------|-----------------|
+| `home-catalogue.png` | Landing: hero + grid **Trámites disponibles** (several procedure cards). |
+| `procedure-detail.png` | Public procedure page: title, requirements list, target days, **Iniciar expediente**. |
+| `case-documents.png` | Case view: requirement with **VALIDADO**, extracted fields, **eye** preview control. |
+| `case-preview.png` | Document preview modal: image or PDF beside extraction (proves human verification). |
+| `review-queue.png` | Reviewer **Cola de revisión** with at least one pending case. |
+| `review-decision.png` | Approve/reject actions on a case ready for final review. |
+| `references-external.png` | **Referencias externas** (BOE / datos.gob.es / SIA) after a search — readable cards. |
+| `architecture.png` | Optional: simple diagram (browser → Next → API → S3/Lambda/Postgres); hand-drawn or Excalidraw is fine. |
+
+Suggested embed block once files exist:
+
+```markdown
+![Catálogo de trámites](docs/screenshots/home-catalogue.png)
+![Expediente y extracción](docs/screenshots/case-documents.png)
 ```
 
 ## License

@@ -9,7 +9,7 @@ import { listProcedureTypes } from "@/lib/api/procedures";
 import { procedureKeys } from "@/lib/api/queries";
 import { routes } from "@/lib/routes";
 
-const MAX_FEATURED = 4;
+const MAX_FEATURED = 6;
 
 export function FeaturedProcedures() {
   const { data, isPending, error } = useQuery({
