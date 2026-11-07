@@ -1,4 +1,9 @@
-import { AlertTriangle, FileText, Sparkles } from "lucide-react";
+import { AlertTriangle, FileText, Sparkles, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { deleteDocument } from "@/lib/api/documents";
+import { ApiError } from "@/lib/api/client";
 import { DocumentFileActions } from "@/components/pilo/document-preview";
 import { StatusBadge } from "@/components/pilo/status-badge";
 import { formatFileSize } from "@/lib/cases/dates";
@@ -18,17 +23,41 @@ const PREVIEWABLE_STATUSES = new Set([
   "PROCESSING_FAILED",
 ]);
 
+const DELETABLE_STATUSES = new Set(["UPLOADED", "VALIDATED", "REJECTED", "PROCESSING_FAILED"]);
+
 export function DocumentRow({
   caseId,
   document,
+  allowDelete = false,
+  onDeleted,
 }: {
   caseId: string;
   document: DocumentRecord;
+  allowDelete?: boolean;
+  onDeleted?: () => void;
 }) {
+  const [deleting, setDeleting] = useState(false);
   const failures = document.validationFailures ?? [];
   const extraction = document.extraction;
   const extractionEntries = extraction ? orderedExtractionEntries(extraction.fields ?? {}) : [];
   const canOpen = PREVIEWABLE_STATUSES.has(document.status);
+  const canDelete = allowDelete && DELETABLE_STATUSES.has(document.status);
+
+  async function handleDelete() {
+    if (!window.confirm("¿Eliminar este archivo y volver a subir otro?")) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteDocument(caseId, document.id);
+      toast.success("Documento eliminado");
+      onDeleted?.();
+    } catch (cause) {
+      toast.error(cause instanceof ApiError ? cause.message : "No se ha podido eliminar el documento.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <li className="rounded-sm bg-surface-container-low p-sm">
@@ -50,6 +79,19 @@ export function DocumentRow({
                 mimeType={document.mimeType}
                 disabled={!canOpen}
               />
+              {canDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-10 text-on-surface-variant hover:text-danger"
+                  disabled={deleting}
+                  onClick={() => void handleDelete()}
+                  aria-label={`Eliminar ${document.fileName}`}
+                >
+                  <Trash2 size={18} strokeWidth={1.75} />
+                </Button>
+              ) : null}
               <StatusBadge status={documentStatus[document.status]} />
             </div>
           </div>

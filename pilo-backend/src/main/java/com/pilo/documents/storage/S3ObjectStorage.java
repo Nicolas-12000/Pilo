@@ -2,6 +2,7 @@ package com.pilo.documents.storage;
 
 import com.pilo.documents.StorageProperties;
 import java.util.Map;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -69,5 +70,16 @@ public class S3ObjectStorage implements ObjectStorage {
 				? response.response().contentType()
 				: "application/octet-stream";
 		return new StoredContent(storageKey, response, mimeType);
+	}
+
+	@Override
+	public void delete(String storageKey) {
+		if (storageKey == null || storageKey.isBlank() || "pending".equals(storageKey)) {
+			return;
+		}
+		s3Client.deleteObject(DeleteObjectRequest.builder()
+				.bucket(storageProperties.bucket())
+				.key(storageKey)
+				.build());
 	}
 }

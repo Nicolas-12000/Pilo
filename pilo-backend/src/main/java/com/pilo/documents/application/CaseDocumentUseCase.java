@@ -32,4 +32,8 @@ public class CaseDocumentUseCase {
 	public List<DocumentResponse> listDocuments(UUID caseId, UUID userId, Role role) {
 		return documentService.list(caseId, userId, role);
 	}
+
+	public void deleteDocument(UUID caseId, UUID documentId, UUID userId, Role role) {
+		documentService.delete(caseId, documentId, userId, role);
+	}
 }

@@ -96,6 +96,17 @@ export async function uploadDocument(
   return (await response.json()) as DocumentRecord;
 }
 
+export async function deleteDocument(caseId: string, documentId: string): Promise<void> {
+  const response = await authFetch(
+    `${getApiUrl()}/api/v1/cases/${caseId}/documents/${documentId}`,
+    { method: "DELETE" },
+  );
+
+  if (!response.ok) {
+    await readApiError(response);
+  }
+}
+
 export async function fetchDocumentContent(
   caseId: string,
   documentId: string,

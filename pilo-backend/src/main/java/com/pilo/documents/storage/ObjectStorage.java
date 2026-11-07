@@ -15,6 +15,10 @@ public interface ObjectStorage {
 
 	StoredContent open(String storageKey);
 
+	default void delete(String storageKey) {
+		// Optional: implementations remove the blob when the DB row is deleted.
+	}
+
 	record UploadInstruction(
 			UUID caseId, UUID documentId, String fileName, String mimeType, long fileSize) {}
 

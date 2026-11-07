@@ -55,6 +55,18 @@ public class LocalObjectStorage implements ObjectStorage {
 		}
 	}
 
+	@Override
+	public void delete(String storageKey) {
+		if (storageKey == null || storageKey.isBlank() || "pending".equals(storageKey)) {
+			return;
+		}
+		try {
+			Files.deleteIfExists(resolvePath(storageKey));
+		} catch (IOException exception) {
+			throw new StorageException("LOCAL_DELETE_FAILED", exception);
+		}
+	}
+
 	private Path resolvePath(String storageKey) {
 		Path base = Path.of(storageProperties.localPath()).toAbsolutePath().normalize();
 		Path target = base.resolve(storageKey).normalize();

@@ -2,7 +2,9 @@ package com.pilo.documents;
 
 import com.pilo.audit.AuditService;
 import com.pilo.cases.CaseAccessService;
+import com.pilo.cases.CaseStatus;
 import com.pilo.cases.ProcedureCase;
+import com.pilo.workflows.WorkflowService;
 import com.pilo.documents.storage.ObjectStorage;
 import com.pilo.procedures.Requirement;
 import com.pilo.procedures.RequirementRepository;
@@ -32,6 +34,8 @@ public class DocumentService {
 	private final ProcessingProperties processingProperties;
 	private final AuditService auditService;
 	private final DocumentPresentationService documentPresentationService;
+	private final DocumentExtractionRepository documentExtractionRepository;
+	private final WorkflowService workflowService;
 
 	public DocumentService(
 			DocumentRepository documentRepository,
@@ -41,7 +45,9 @@ public class DocumentService {
 			DocumentProcessingJob documentProcessingJob,
 			ProcessingProperties processingProperties,
 			AuditService auditService,
-			DocumentPresentationService documentPresentationService) {
+			DocumentPresentationService documentPresentationService,
+			DocumentExtractionRepository documentExtractionRepository,
+			WorkflowService workflowService) {
 		this.documentRepository = documentRepository;
 		this.requirementRepository = requirementRepository;
 		this.caseAccessService = caseAccessService;
@@ -50,6 +56,8 @@ public class DocumentService {
 		this.processingProperties = processingProperties;
 		this.auditService = auditService;
 		this.documentPresentationService = documentPresentationService;
+		this.documentExtractionRepository = documentExtractionRepository;
+		this.workflowService = workflowService;
 	}
 
 	@Transactional
@@ -141,6 +149,45 @@ public class DocumentService {
 	public List<DocumentResponse> list(UUID caseId, UUID userId, Role role) {
 		caseAccessService.requireAccessibleCase(caseId, userId, role);
 		return documentPresentationService.present(documentRepository.findByCaseId(caseId));
+	}
+
+	@Transactional
+	public void delete(UUID caseId, UUID documentId, UUID userId, Role role) {
+		ProcedureCase procedureCase = caseAccessService.requireAccessibleCase(caseId, userId, role);
+		if (role != Role.USER) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "DOCUMENT_DELETE_FORBIDDEN");
+		}
+		if (procedureCase.getStatus() == CaseStatus.APPROVED
+				|| procedureCase.getStatus() == CaseStatus.REJECTED) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "CASE_CLOSED");
+		}
+
+		Document document = documentRepository
+				.findByIdAndProcedureCaseId(documentId, caseId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "DOCUMENT_NOT_FOUND"));
+
+		if (document.getStatus() == DocumentStatus.PROCESSING
+				|| document.getStatus() == DocumentStatus.PENDING_UPLOAD) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "DOCUMENT_CANNOT_DELETE");
+		}
+
+		documentExtractionRepository.deleteByDocument_Id(documentId);
+		String storageKey = document.getStorageKey();
+		documentRepository.delete(document);
+		objectStorage.delete(storageKey);
+
+		auditService.record(
+				procedureCase.getUser(),
+				"DOCUMENT_DELETED",
+				"document:" + documentId,
+				"SUCCESS",
+				Map.of(
+						"requirementCode",
+						document.getRequirement().getCode(),
+						"fileName",
+						document.getFileName()));
+
+		workflowService.reevaluate(caseId);
 	}
 
 	private RequirementContext validateRequirement(UUID caseId, UUID userId, Role role, UUID requirementId) {

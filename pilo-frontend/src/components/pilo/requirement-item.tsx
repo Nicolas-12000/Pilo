@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/pilo/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { uploadDocument } from "@/lib/api/documents";
 import { ApiError } from "@/lib/api/client";
+import { useSession } from "@/lib/auth/use-session";
 import type { CaseRequirementStatus, DocumentRecord } from "@/lib/api/types";
 import { requirementStatus } from "@/lib/cases/status";
 import { cn } from "@/lib/utils/cn";
@@ -27,7 +28,9 @@ export function RequirementItem({
   documents,
   onUploaded,
 }: RequirementItemProps) {
+  const { user } = useSession();
   const [uploading, setUploading] = useState(false);
+  const citizenOwner = user?.role === "USER";
   const fulfilled = requirement.fulfillmentStatus === "FULFILLED";
   const canUpload = UPLOADABLE_STATUSES.has(requirement.fulfillmentStatus);
 
@@ -83,7 +86,13 @@ export function RequirementItem({
       {documents.length > 0 ? (
         <ul className="mt-sm flex flex-col gap-xs">
           {documents.map((document) => (
-            <DocumentRow key={document.id} caseId={caseId} document={document} />
+            <DocumentRow
+              key={document.id}
+              caseId={caseId}
+              document={document}
+              allowDelete={citizenOwner}
+              onDeleted={onUploaded}
+            />
           ))}
         </ul>
       ) : null}

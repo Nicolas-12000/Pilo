@@ -66,7 +66,11 @@ public class ApiExceptionHandler {
 			case "WORKFLOW_DEFINITION_MISSING" ->
 				"Este trámite aún no tiene un flujo de trabajo configurado.";
 			case "PROCEDURE_TYPE_NOT_FOUND" -> "No hemos encontrado ese trámite.";
-			case "PROCEDURE_TYPE_ARCHIVED" -> "Este trámite ya no admite solicitudes nuevas.";			case "REQUIREMENT_NOT_FOUND" -> "No hemos encontrado ese requisito.";
+			case "PROCEDURE_TYPE_ARCHIVED" -> "Este trámite ya no admite solicitudes nuevas.";
+			case "REQUIREMENT_NOT_FOUND" -> "No hemos encontrado ese requisito.";
+			case "DOCUMENT_DELETE_FORBIDDEN" -> "Solo el titular del expediente puede eliminar documentos.";
+			case "DOCUMENT_CANNOT_DELETE" -> "No puedes eliminar un documento mientras se está analizando.";
+			case "CASE_CLOSED" -> "El expediente ya está cerrado.";
 			case "REQUIREMENT_MISMATCH" -> "Ese requisito no pertenece a este expediente.";
 			case "EMPTY_FILE" -> "El archivo está vacío.";
 			case "DOCUMENT_NOT_FOUND" -> "No hemos encontrado ese documento.";

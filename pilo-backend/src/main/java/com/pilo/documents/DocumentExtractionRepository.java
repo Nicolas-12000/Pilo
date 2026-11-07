@@ -10,6 +10,8 @@ public interface DocumentExtractionRepository extends JpaRepository<DocumentExtr
 
 	boolean existsByDocument_Id(UUID documentId);
 
+	void deleteByDocument_Id(UUID documentId);
+
 	@Query("""
 			SELECT de FROM DocumentExtraction de
 			JOIN FETCH de.document
