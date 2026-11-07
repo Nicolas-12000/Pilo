@@ -6,6 +6,7 @@ import com.pilo.auth.TooManyLoginAttemptsException;
 import com.pilo.procedures.ProcedureTypeNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,6 +35,13 @@ public class ApiExceptionHandler {
 						"TOO_MANY_LOGIN_ATTEMPTS", "Demasiados intentos. Inténtalo de nuevo en unos minutos."));
 	}
 
+	// @PreAuthorize denials surface inside MVC; unhandled they fall through to /error and become a 401.
+	@ExceptionHandler(AccessDeniedException.class)
+	ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ignored) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(new ApiError("FORBIDDEN", "Tu cuenta no tiene permisos para esta acción."));
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ignored) {
 		return ResponseEntity.badRequest()
@@ -57,8 +65,7 @@ public class ApiExceptionHandler {
 		return switch (code) {
 			case "WORKFLOW_DEFINITION_MISSING" ->
 				"Este trámite aún no tiene un flujo de trabajo configurado.";
-			case "PROCEDURE_TYPE_NOT_FOUND" -> "No hemos encontrado ese trámite.";
-			case "REQUIREMENT_NOT_FOUND" -> "No hemos encontrado ese requisito.";
+			case "PROCEDURE_TYPE_NOT_FOUND" -> "No hemos encontrado ese trámite.";			case "REQUIREMENT_NOT_FOUND" -> "No hemos encontrado ese requisito.";
 			case "REQUIREMENT_MISMATCH" -> "Ese requisito no pertenece a este expediente.";
 			case "EMPTY_FILE" -> "El archivo está vacío.";
 			case "DOCUMENT_NOT_FOUND" -> "No hemos encontrado ese documento.";

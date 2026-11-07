@@ -43,7 +43,7 @@ export function AdminProceduresPanel() {
             description={
               error instanceof ApiError && error.status === 403
                 ? "Tu cuenta no tiene permisos de administrador."
-                : "Comprueba que el backend esté en marcha."
+                : "El servicio no responde ahora mismo. Inténtalo de nuevo en unos segundos."
             }
           />
         ) : data && data.length > 0 ? (

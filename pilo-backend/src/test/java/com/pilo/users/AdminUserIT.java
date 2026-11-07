@@ -70,6 +70,15 @@ class AdminUserIT extends AbstractIntegrationTest {
 				.andExpect(jsonPath("$.error").value("CANNOT_DISABLE_SELF"));
 	}
 
+	@Test
+	void nonAdminGetsForbiddenNotUnauthorized() throws Exception {
+		String userToken = login("user@pilo.test");
+
+		mockMvc.perform(get("/api/v1/admin/users").header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
+				.andExpect(status().isForbidden())
+				.andExpect(jsonPath("$.error").value("FORBIDDEN"));
+	}
+
 	private void persist(String email, String fullName, Role role) {
 		User user = new User();
 		user.setEmail(email);

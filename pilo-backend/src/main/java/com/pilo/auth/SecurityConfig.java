@@ -59,6 +59,9 @@ public class SecurityConfig {
 						.authenticated()
 						.requestMatchers("/actuator/health", "/actuator/health/**")
 						.permitAll()
+						// Error dispatches carry no JWT; without this every 500 is reported as 401.
+						.requestMatchers("/error")
+						.permitAll()
 						.anyRequest()
 						.authenticated())
 				.exceptionHandling(exceptions ->

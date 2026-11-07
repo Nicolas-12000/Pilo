@@ -1,5 +1,6 @@
-import { getAccessToken } from "@/lib/auth/session";
+import { clearSession, getAccessToken } from "@/lib/auth/session";
 import type { ApiErrorBody } from "@/lib/api/types";
+import { routes } from "@/lib/routes";
 
 export class ApiError extends Error {
   constructor(
@@ -29,7 +30,23 @@ export function authHeaders(extra?: HeadersInit): HeadersInit {
   };
 }
 
+/** Expired, revoked or disabled sessions: drop the stale token and send the user back to login. */
+function handleRejectedToken() {
+  if (typeof window === "undefined") {
+    return;
+  }
+  clearSession();
+  const { pathname, search } = window.location;
+  if (pathname !== routes.login) {
+    window.location.assign(routes.loginNext(pathname + search));
+  }
+}
+
 export async function authFetch(input: string, init?: RequestInit): Promise<Response> {
-  const headers = authHeaders(init?.headers);
-  return fetch(input, { ...init, headers });
+  const hadToken = getAccessToken() != null;
+  const response = await fetch(input, { ...init, headers: authHeaders(init?.headers) });
+  if (response.status === 401 && hadToken) {
+    handleRejectedToken();
+  }
+  return response;
 }
